@@ -1,5 +1,5 @@
-import { cleanup, renderHook } from '@testing-library/react'
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { cleanup } from '@testing-library/react'
+import { afterEach, describe, expect, test } from 'vitest'
 
 afterEach(() => cleanup())
 
