@@ -1,0 +1,64 @@
+{
+  "name": "t-form",
+  "description": "A form library for React",
+  "version": "0.1.0",
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest --ui",
+    "test:run": "vitest run",
+    "lint": "pnpm tsc && pnpm eslint",
+    "tsc": "tsc -p tsconfig.prod.json",
+    "eslint": "CI=true eslint --color --ext .jsx,.js,.ts,.tsx src/ tests/",
+    "build": "pnpm test:run && pnpm lint && pnpm build:no-test",
+    "build:no-test": "tsup --minify --dts",
+    "build-test": "tsup --config tsup.test.config.ts",
+    "pre-publish": "./scripts/check-if-is-sync.sh && pnpm build "
+  },
+  "files": [
+    "dist"
+  ],
+  "packageManager": "^pnpm@7.6.0",
+  "repository": "github:lucasols/t-form",
+  "author": "Lucas Santos",
+  "type": "module",
+  "main": "./dist/main.cjs",
+  "module": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/main.js",
+      "require": "./dist/main.cjs"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=14.6.0"
+  },
+  "devDependencies": {
+    "@lucasols/eslint-plugin-extended-lint": "^0.10.0",
+    "@types/node": "^20.4.4",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@types/testing-library__jest-dom": "^5.14.8",
+    "@typescript-eslint/eslint-plugin": "^6.1.0",
+    "@typescript-eslint/parser": "^6.1.0",
+    "@vitest/ui": "^0.33.0",
+    "eslint": "^8.45.0",
+    "prettier": "^3.0.0",
+    "eslint-plugin-vitest": "^0.2.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tsm": "^2.3.0",
+    "tsup": "^7.1.0",
+    "happy-dom": "^10.5.2",
+    "typescript": "^5.1.6",
+    "vite": "^4.4.6",
+    "vitest": "^0.33.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^14.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
