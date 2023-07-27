@@ -1,5 +1,5 @@
 import { act } from '@testing-library/react'
-import { evtmitter, Emitter } from 'evtmitter'
+import { evtmitter } from 'evtmitter'
 import { useOnEvtmitterEvent } from 'evtmitter/react'
 
 export function emulateAction<T = undefined>() {
