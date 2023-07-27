@@ -23,7 +23,12 @@ const config = {
   env: {
     browser: true,
   },
-  plugins: ['@typescript-eslint', '@lucasols/extended-lint', 'vitest'],
+  plugins: [
+    '@typescript-eslint',
+    '@lucasols/extended-lint',
+    'vitest',
+    'react-hooks',
+  ],
 
   rules: {
     'no-warning-comments': [ERROR_IN_CI, { terms: ['FIX:'] }],
@@ -107,6 +112,13 @@ const config = {
     /* vitest */
     'vitest/expect-expect': ERROR_IN_CI,
     'vitest/no-identical-title': ERROR_IN_CI,
+
+    /* react */
+    'react-hooks/rules-of-hooks': ERROR,
+    'react-hooks/exhaustive-deps': ERROR_IN_CI,
+
+    /* extended-lint */
+    '@lucasols/extended-lint/no-unused-type-props-in-args': ERROR_IN_CI,
   },
   extends: [
     'eslint:recommended',
