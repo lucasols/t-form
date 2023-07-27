@@ -13,7 +13,7 @@ test('read initial value', () => {
   renderHook(() => {
     const { useFormState } = useForm({
       initialConfig: {
-        array: { initialValue: 'John' },
+        name: { initialValue: 'John' },
       },
     })
 
@@ -60,7 +60,7 @@ describe('handle change', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          array: { initialValue: 'John' },
+          name: { initialValue: 'John' },
         },
       })
 
@@ -131,7 +131,7 @@ describe('handle change', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          array: { initialValue: 'John' },
+          name: { initialValue: 'John' },
           age: { initialValue: 10 },
         },
       })
@@ -170,7 +170,7 @@ test('is diff from initial', () => {
   renderHook(() => {
     const { useFormState, handleChange } = useForm({
       initialConfig: {
-        array: { initialValue: 'John' },
+        name: { initialValue: 'John' },
       },
     })
 
@@ -211,7 +211,7 @@ describe('required fields', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          array: { initialValue: '', required: true },
+          name: { initialValue: '', required: true },
         },
       })
 
@@ -251,7 +251,7 @@ describe('required fields', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          array: {
+          name: {
             initialValue: 'Ok',
             required: true,
             requiredErrorMsg: 'Name is required',
@@ -286,7 +286,7 @@ describe('required fields', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          array: {
+          name: {
             initialValue: 'Ok',
             required: true,
             requiredErrorMsg: false,
@@ -389,7 +389,7 @@ describe('required fields', () => {
     renderHook(() => {
       const { useFormState, touchField } = useForm({
         initialConfig: {
-          array: { initialValue: '', required: true },
+          name: { initialValue: '', required: true },
         },
       })
 
@@ -458,10 +458,10 @@ describe('check if is empty', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          array: { initialValue: '' },
+          name: { initialValue: '' },
         },
         derivatedConfig: {
-          array: { checkIfIsEmpty: (value) => value === 'not empty' },
+          name: { checkIfIsEmpty: (value) => value === 'not empty' },
         },
       })
 
@@ -500,7 +500,7 @@ test('isDiffFromInitial', () => {
   renderHook(() => {
     const { useFormState, handleChange } = useForm({
       initialConfig: {
-        array: { initialValue: 'John' },
+        name: { initialValue: 'John' },
         age: { initialValue: 10 },
       },
     })

@@ -185,7 +185,7 @@ test('remove field', () => {
     const { useFormState, updateConfig } = useForm<DynamicFormInitialConfig<string>>({
       initialConfig: {
         password: { initialValue: '' },
-        array: { initialValue: '' },
+        name: { initialValue: '' },
       },
     })
 
@@ -280,7 +280,7 @@ test('merge and removeExcess', () => {
     const { useFormState, updateConfig } = useForm<DynamicFormInitialConfig<string>>({
       initialConfig: {
         password: { initialValue: '' },
-        array: { initialValue: '' },
+        name: { initialValue: '' },
       },
     })
 
@@ -333,7 +333,7 @@ test('override some fields', () => {
           metadata: { foo: 'bar' },
           required: true,
         },
-        array: { initialValue: '' },
+        name: { initialValue: '' },
       },
     })
 
@@ -385,7 +385,7 @@ test('override all', () => {
           metadata: { foo: 'bar' },
           required: true,
         },
-        array: { initialValue: '' },
+        name: { initialValue: '' },
       },
     })
 
