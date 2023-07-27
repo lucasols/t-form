@@ -1,7 +1,7 @@
 import { FieldState } from '../../src/main'
 import { pick } from '../../src/utils/object'
 
-function simplifyFieldState(fieldState: FieldState<any, any>) {
+export function simplifyFieldState(fieldState: FieldState<any, any>) {
   return {
     val: fieldState.value,
     initV: fieldState.initialValue,
@@ -12,7 +12,7 @@ function simplifyFieldState(fieldState: FieldState<any, any>) {
     isTouched: fieldState.isTouched ? 'Y' : 'N',
     isDiff: fieldState.isDiffFromInitial ? 'Y' : 'N',
     m: fieldState.metadata,
-    isL: fieldState.isLoading ? 'Y' : 'N',
+    isL: fieldState.valueIsLoading ? 'Y' : 'N',
   }
 }
 export function simplifyFieldsState(

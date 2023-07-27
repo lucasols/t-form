@@ -3,7 +3,10 @@ import { describe, expect, test } from 'vitest'
 import { useForm } from '../src/main'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
-import { simplifyFieldsState } from './utils/simplifyFieldsState'
+import {
+  simplifyFieldState,
+  simplifyFieldsState,
+} from './utils/simplifyFieldsState'
 
 describe('validate field', () => {
   test('simple field validation', () => {
@@ -229,7 +232,7 @@ describe('validate field', () => {
         },
         fieldIsValid: {
           fileUrl: ({ value }) => {
-            return value === 'uploading' ? { isLoading: true } : true
+            return value === 'uploading' ? { valueIsLoading: true } : true
           },
         },
       })
@@ -241,7 +244,7 @@ describe('validate field', () => {
         value: formFields.fileUrl.value,
         errors: formFields.fileUrl.errors,
         isValid: formFields.fileUrl.isValid,
-        isLoading: formFields.fileUrl.isLoading,
+        isLoading: formFields.fileUrl.valueIsLoading,
       })
 
       setFileUrl.useOnAction((age) => {
@@ -343,8 +346,8 @@ describe('validate form', () => {
       renders.add({
         formIsValid,
         formError,
-        name: formFields.name,
-        age: formFields.age,
+        name: simplifyFieldState(formFields.name),
+        age: simplifyFieldState(formFields.age),
       })
 
       setAge.useOnAction((age) => {
@@ -364,20 +367,20 @@ describe('validate form', () => {
       ┌─
       ⎢ formIsValid: true
       ⎢ formError: false
-      ⎢ name: {value:, initialValue:, required:false, errors:null, isValid:true, isEmpty:true, isTouched:false, isDiffFromInitial:false, isLoading:false}
-      ⎢ age: {value:0, initialValue:0, required:false, errors:null, isValid:true, isEmpty:false, isTouched:false, isDiffFromInitial:false, isLoading:false}
+      ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+      ⎢ age: {val:0, initV:0, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
       └─
       ┌─
       ⎢ formIsValid: true
       ⎢ formError: false
-      ⎢ name: {value:, initialValue:, required:false, errors:null, isValid:true, isEmpty:true, isTouched:false, isDiffFromInitial:false, isLoading:false}
-      ⎢ age: {value:17, initialValue:0, required:false, errors:null, isValid:true, isEmpty:false, isTouched:true, isDiffFromInitial:true, isLoading:false}
+      ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+      ⎢ age: {val:17, initV:0, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
       └─
       ┌─
       ⎢ formIsValid: false
       ⎢ formError: You must be at least 18 years old
-      ⎢ name: {value:Adult, initialValue:, required:false, errors:null, isValid:true, isEmpty:false, isTouched:true, isDiffFromInitial:true, isLoading:false}
-      ⎢ age: {value:17, initialValue:0, required:false, errors:null, isValid:true, isEmpty:false, isTouched:true, isDiffFromInitial:true, isLoading:false}
+      ⎢ name: {val:Adult, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+      ⎢ age: {val:17, initV:0, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
       └─
       "
     `)
@@ -402,7 +405,7 @@ test('force form validation', () => {
     renders.add({
       validationWasForced,
       formIsValid,
-      age: formFields.age,
+      age: simplifyFieldState(formFields.age),
     })
 
     setAge.useOnAction((age) => {
@@ -421,12 +424,12 @@ test('force form validation', () => {
     ┌─
     ⎢ validationWasForced: false
     ⎢ formIsValid: false
-    ⎢ age: {value:null, initialValue:null, required:true, errors:null, isValid:false, isEmpty:true, isTouched:false, isDiffFromInitial:false, isLoading:false}
+    ⎢ age: {val:null, initV:null, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     ┌─
     ⎢ validationWasForced: true
     ⎢ formIsValid: false
-    ⎢ age: {value:null, initialValue:null, required:true, errors:[This field is required], isValid:false, isEmpty:true, isTouched:true, isDiffFromInitial:false, isLoading:false}
+    ⎢ age: {val:null, initV:null, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:N, isL:N}
     └─
     "
   `)
@@ -439,8 +442,50 @@ test('force form validation', () => {
     ┌─
     ⎢ validationWasForced: true
     ⎢ formIsValid: true
-    ⎢ age: {value:17, initialValue:null, required:true, errors:null, isValid:true, isEmpty:false, isTouched:true, isDiffFromInitial:true, isLoading:false}
+    ⎢ age: {val:17, initV:null, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
     └─
+    "
+  `)
+})
+
+test('silentIfNotTouched error', () => {
+  const renders = createRenderStore()
+
+  const setAge = emulateAction<number>()
+
+  renderHook(() => {
+    const { useFormState, handleChange } = useForm({
+      initialConfig: {
+        age: { initialValue: 16 as number, required: true },
+      },
+      fieldIsValid: {
+        age: ({ value }) => {
+          if (!value) return true
+
+          return value < 18
+            ? { silentIfNotTouched: 'You must be at least 18 years old' }
+            : true
+        },
+      },
+    })
+
+    const { formFields } = useFormState()
+
+    renders.add({
+      age: simplifyFieldState(formFields.age),
+    })
+
+    setAge.useOnAction((age) => {
+      handleChange('age', age)
+    })
+  })
+
+  setAge.call(17)
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    age: {val:16, initV:16, req:Y, errors:null, isValid:N, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    age: {val:17, initV:16, req:Y, errors:[You must be at least 18 years old], isValid:N, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
     "
   `)
 })

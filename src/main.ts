@@ -32,7 +32,13 @@ type FieldIsValid<T, M, F extends FieldsState<any>, FM> = (context: {
   fieldMetadata: M
   fields: F
   formMetadata: FM
-}) => true | string | string[] | { silentInvalid: true } | { isLoading: true }
+}) =>
+  | true
+  | string
+  | string[]
+  | { silentInvalid: true }
+  | { valueIsLoading: true }
+  | { silentIfNotTouched: string | string[] }
 
 type FieldValidation<T, M, F extends FieldsState<any>, FM> =
   | FieldIsValid<T, M, F, FM>
@@ -70,7 +76,7 @@ export type FieldState<V, M> = {
   isTouched: boolean
   isDiffFromInitial: boolean
   isEmpty: boolean
-  isLoading: boolean
+  valueIsLoading: boolean
 }
 
 type FieldsState<T extends FieldsInitialConfig> = {
@@ -636,7 +642,7 @@ function getInitialStateFromConfig<T extends FieldsInitialConfig>(
     isTouched: false,
     isDiffFromInitial: false,
     metadata: config._metadata,
-    isLoading: false,
+    valueIsLoading: false,
   }
 }
 
@@ -650,7 +656,7 @@ export function getGenericFormState<T extends FieldsInitialConfig>(
   let formIsValid = state.formError === false
 
   for (const [, fieldState] of fieldEntries) {
-    if (fieldState.isLoading) {
+    if (fieldState.valueIsLoading) {
       someFieldIsLoading = true
     }
 
@@ -706,7 +712,7 @@ function updateFieldStateFromValue(
     : null
   draftField.isValid = validationResults.isValid
   draftField.isEmpty = validationResults.isEmpty
-  draftField.isLoading = false
+  draftField.valueIsLoading = false
 }
 
 function basicFieldValidation(
@@ -810,8 +816,20 @@ function performFormValidation(
             }
 
             fieldState.errors.push(...result)
-          } else if ('isLoading' in result) {
-            fieldState.isLoading = true
+          } else if ('valueIsLoading' in result) {
+            fieldState.valueIsLoading = true
+          } else if ('silentIfNotTouched' in result) {
+            if (fieldState.isTouched) {
+              if (!fieldState.errors) {
+                fieldState.errors = []
+              }
+
+              fieldState.errors.push(
+                ...(Array.isArray(result.silentIfNotTouched)
+                  ? result.silentIfNotTouched
+                  : [result.silentIfNotTouched]),
+              )
+            }
           }
         }
       }
