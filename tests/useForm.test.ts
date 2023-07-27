@@ -326,7 +326,7 @@ describe('required fields', () => {
         },
         derivatedConfig: {
           birthDate: {
-            required: ({ age }) => !age.isEmpty,
+            required: ({ fields: { age } }) => !age.isEmpty,
           },
         },
       })

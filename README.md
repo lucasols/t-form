@@ -29,11 +29,11 @@ const LoginComponet = () => {
     },
     // add custom validation for each field
     fieldIsValid: {
-      email: (value) => (value.includes('@') ? true : 'Invalid email'),
+      email: ({ value }) => (value.includes('@') ? true : 'Invalid email'),
       password: [
-        (value) =>
+        ({ value }) =>
           value.length >= 6 ? true : 'Password must be at least 6 characters',
-        (value) =>
+        ({ value }) =>
           value.length <= 20 ? true : 'Password must be at most 20 characters',
       ],
     },

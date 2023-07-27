@@ -17,7 +17,7 @@ describe('validate field', () => {
           password: { initialValue: '' },
         },
         fieldIsValid: {
-          password: (value) =>
+          password: ({ value }) =>
             value.length < 8
               ? 'Password must have at least 8 characters'
               : true,
@@ -66,11 +66,11 @@ describe('validate field', () => {
         },
         fieldIsValid: {
           password: [
-            (value) =>
+            ({ value }) =>
               value.length < 8
                 ? 'Password must have at least 8 characters'
                 : true,
-            (value) =>
+            ({ value }) =>
               !value.match(/[0-9]/)
                 ? 'Password must have at least one number'
                 : true,
@@ -121,7 +121,7 @@ describe('validate field', () => {
           confirmPassword: { initialValue: '', required: true },
         },
         fieldIsValid: {
-          confirmPassword: (value, { formState: { password } }) =>
+          confirmPassword: ({ value, fields: { password } }) =>
             value !== password.value ? 'Passwords must match' : true,
         },
       })
@@ -180,8 +180,8 @@ describe('validate field', () => {
           age: { initialValue: 0, metadata: { minAge: 18 } },
         },
         fieldIsValid: {
-          age: (value, { metadata }) =>
-            value < metadata.minAge
+          age: ({ value, fieldMetadata }) =>
+            value < fieldMetadata.minAge
               ? 'You must be at least 18 years old'
               : true,
         },
@@ -228,7 +228,7 @@ describe('validate field', () => {
           fileUrl: { initialValue: '', required: true },
         },
         fieldIsValid: {
-          fileUrl: (value) => {
+          fileUrl: ({ value }) => {
             return value === 'uploading' ? { isLoading: true } : true
           },
         },
@@ -290,7 +290,7 @@ describe('validate field', () => {
           field: { initialValue: '' },
         },
         fieldIsValid: {
-          field: (value) =>
+          field: ({ value }) =>
             value === 'invalid' ? { silentInvalid: true } : true,
         },
       })

@@ -22,23 +22,26 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
   requiredErrorMsg?: string | false
 }
 
-type FieldDerivatedConfig<T, F extends FieldsState<any>> = {
+type FieldDerivatedConfig<T, F extends FieldsState<any>, FM> = {
   checkIfIsEmpty?: (value: T) => boolean
-  required?: (fieldsState: F) => boolean
+  required?: (context: { fields: F; formMetadata: FM }) => boolean
 }
 
-type FieldIsValid<T, M, F extends FieldsState<any>> = (
-  value: T,
-  context: { metadata: M; formState: F },
-) => true | string | string[] | { silentInvalid: true } | { isLoading: true }
+type FieldIsValid<T, M, F extends FieldsState<any>, FM> = (context: {
+  value: T
+  fieldMetadata: M
+  fields: F
+  formMetadata: FM
+}) => true | string | string[] | { silentInvalid: true } | { isLoading: true }
 
-type FieldValidation<T, M, F extends FieldsState<any>> =
-  | FieldIsValid<T, M, F>
-  | FieldIsValid<T, M, F>[]
+type FieldValidation<T, M, F extends FieldsState<any>, FM> =
+  | FieldIsValid<T, M, F, FM>
+  | FieldIsValid<T, M, F, FM>[]
 
-type FieldConfig = FieldInitialConfig & {
-  derived: FieldDerivatedConfig<unknown, any> | undefined
-  validations: FieldValidation<unknown, unknown, any> | undefined
+type FieldConfig = Omit<FieldInitialConfig, 'metadata'> & {
+  _metadata?: any
+  derived: FieldDerivatedConfig<unknown, any, any> | undefined
+  validations: FieldValidation<unknown, unknown, any, any> | undefined
   arrayConfig:
     | ArrayFieldsConfig<
         Record<string, FieldInitialConfig<any[], unknown>>
@@ -46,11 +49,12 @@ type FieldConfig = FieldInitialConfig & {
     | undefined
 }
 
-type FormStoreState<T extends FieldsInitialConfig> = {
+type FormStoreState<T extends FieldsInitialConfig, M = unknown> = {
   fields: {
     [K in keyof T]: FieldState<T[K]['initialValue'], T[K]['metadata']>
   }
   formError: string | false
+  formMetadata: M
   validationWasForced: boolean
 }
 
@@ -73,23 +77,31 @@ type FieldsState<T extends FieldsInitialConfig> = {
   [P in keyof T]: FieldState<T[P]['initialValue'], T[P]['metadata']>
 }
 
-type FieldsDerivatedConfig<T extends FieldsInitialConfig> = {
-  [K in keyof T]?: FieldDerivatedConfig<T[K]['initialValue'], FieldsState<T>>
-}
-
-type FieldsValidation<T extends FieldsInitialConfig> = {
-  [K in keyof T]?: FieldValidation<
+type FieldsDerivatedConfig<T extends FieldsInitialConfig, FM> = {
+  [K in keyof T]?: FieldDerivatedConfig<
     T[K]['initialValue'],
-    T[K]['metadata'],
-    { [P in keyof T]: FieldState<T[P]['initialValue'], T[P]['metadata']> }
+    FieldsState<T>,
+    FM
   >
 }
 
-type FormStore<T extends FieldsInitialConfig> = Store<FormStoreState<T>>
+type FieldsValidation<T extends FieldsInitialConfig, FM> = {
+  [K in keyof T]?: FieldValidation<
+    T[K]['initialValue'],
+    T[K]['metadata'],
+    { [P in keyof T]: FieldState<T[P]['initialValue'], T[P]['metadata']> },
+    FM
+  >
+}
+
+export type FormStore<T extends FieldsInitialConfig, FM = undefined> = Store<
+  FormStoreState<T, FM>
+>
 
 export type UpdateFieldConfig<
   T extends FieldsInitialConfig,
   K extends keyof T,
+  FM = undefined,
 > = {
   replace?: boolean
   value?: T[K]['initialValue']
@@ -99,11 +111,15 @@ export type UpdateFieldConfig<
   metadata?: T[K]['metadata']
   requiredErrorMsg?: string | false
   checkIfIsEmpty?: (value: T[K]['initialValue']) => boolean
-  derivedRequired?: (fieldsState: FieldsState<T>) => boolean
+  derivedRequired?: (context: {
+    fields: FieldsState<T>
+    formMetadata: FM
+  }) => boolean
   fieldIsValid?: FieldValidation<
     T[K]['initialValue'],
     T[K]['metadata'],
-    FieldsState<T>
+    FieldsState<T>,
+    FM
   >
 }
 
@@ -129,18 +145,22 @@ type ArrayFieldsConfig<T extends FieldsInitialConfig> = {
     : never
 }
 
-export function useForm<T extends FieldsInitialConfig>({
+export function useForm<T extends FieldsInitialConfig, M = undefined>({
   initialConfig: fieldsInitialConfig,
   derivatedConfig: fieldsDerivatedConfig,
   fieldIsValid: validations,
   advancedFormValidation,
   arrayFieldsConfig,
+  initialFormMetadata,
 }: {
   initialConfig: T | (() => T)
-  derivatedConfig?: FieldsDerivatedConfig<T> | (() => FieldsDerivatedConfig<T>)
-  fieldIsValid?: FieldsValidation<T> | (() => FieldsValidation<T>)
+  derivatedConfig?:
+    | FieldsDerivatedConfig<T, M>
+    | (() => FieldsDerivatedConfig<T, M>)
+  fieldIsValid?: FieldsValidation<T, M> | (() => FieldsValidation<T, M>)
   advancedFormValidation?: AdvancedFormValidation<T>
   arrayFieldsConfig?: ArrayFieldsConfig<T> | (() => ArrayFieldsConfig<T>)
+  initialFormMetadata?: M | (() => M)
 }) {
   type FieldsId = keyof T
 
@@ -155,16 +175,20 @@ export function useForm<T extends FieldsInitialConfig>({
     for (const [id, initialConfig] of objectTypedEntries(configs)) {
       mapConfig.set(id, {
         ...initialConfig,
+        _metadata: initialConfig.metadata,
         derived: derivatedConfig?.[id],
         validations: fieldValidations?.[id],
         arrayConfig: arraysConfig?.[id],
       })
     }
 
-    return { fieldsMap: mapConfig }
+    return {
+      fieldsMap: mapConfig,
+      formMetadata: unwrapGetterOrValue(initialFormMetadata),
+    }
   })
 
-  type InternalFormStoreState = FormStoreState<T>
+  type InternalFormStoreState = FormStoreState<T, M>
 
   function performAdvancedFormValidation(
     formStoreState: InternalFormStoreState,
@@ -190,6 +214,7 @@ export function useForm<T extends FieldsInitialConfig>({
       fields: {} as any,
       formError: false,
       validationWasForced: false,
+      formMetadata: formConfig.formMetadata as M,
     }
 
     for (const [id, config] of formConfig.fieldsMap) {
@@ -225,7 +250,7 @@ export function useForm<T extends FieldsInitialConfig>({
     [formConfig, latestFormValidation],
   )
 
-  const formStore: FormStore<T> = useCreateStore<InternalFormStoreState>(
+  const formStore: FormStore<T, M> = useCreateStore<InternalFormStoreState>(
     () => ({
       state: getInitialState(),
     }),
@@ -361,117 +386,138 @@ export function useForm<T extends FieldsInitialConfig>({
   )
 
   const updateConfig = useCallback(
-    (
-      fieldsToUpdate: UpdateFormConfig<T>,
-      mode: 'merge' | 'overrideAll' | 'mergeAndRemoveExcessFields' = 'merge',
-    ) => {
+    ({
+      fields,
+      fieldsUpdateMode = 'merge',
+      formMetadata,
+    }: {
+      fields?: UpdateFormConfig<T>
+      formMetadata?: M
+      fieldsUpdateMode?: 'merge' | 'overrideAll' | 'mergeAndRemoveExcessFields'
+    }) => {
       formStore.batch(() => {
-        formStore.produceState((draft) => {
-          for (const [id, newConfig] of objectTypedEntries(fieldsToUpdate)) {
-            const fieldConfig = formConfig.fieldsMap.get(id)
+        if (fields) {
+          formStore.produceState((draft) => {
+            for (const [id, newConfig] of objectTypedEntries(fields)) {
+              const fieldConfig = formConfig.fieldsMap.get(id)
 
-            if (!newConfig) continue
+              if (!newConfig) continue
 
-            if (
-              newConfig !== 'remove' &&
-              (!fieldConfig || newConfig.replace || mode === 'overrideAll')
-            ) {
-              if (!Object.hasOwn(newConfig, 'initialValue')) {
-                throw new Error(
-                  `Missing "initialValue" for field "${String(id)}"`,
-                )
+              if (
+                newConfig !== 'remove' &&
+                (!fieldConfig ||
+                  newConfig.replace ||
+                  fieldsUpdateMode === 'overrideAll')
+              ) {
+                if (!Object.hasOwn(newConfig, 'initialValue')) {
+                  throw new Error(
+                    `Missing "initialValue" for field "${String(id)}"`,
+                  )
+                }
+
+                if (Object.hasOwn(newConfig, 'value')) {
+                  throw new Error(
+                    "Can't set value when replacing/adding fields",
+                  )
+                }
+
+                const config = {
+                  initialValue: newConfig.initialValue,
+                  required: newConfig.required ?? false,
+                  requiredErrorMsg: newConfig.requiredErrorMsg,
+                  derived: {
+                    checkIfIsEmpty: newConfig.checkIfIsEmpty,
+                    required: newConfig.derivedRequired,
+                  },
+                  validations: newConfig.fieldIsValid,
+                  metadata: newConfig.metadata,
+                  arrayConfig: fieldConfig?.arrayConfig,
+                }
+
+                formConfig.fieldsMap.set(id, config)
+
+                draft.fields[id] = getInitialStateFromConfig(config)
+
+                continue
+              }
+
+              if (newConfig === 'remove') {
+                formConfig.fieldsMap.delete(id)
+                delete draft.fields[id]
+
+                continue
+              }
+
+              const fieldState = draft.fields[id]
+
+              if (!fieldConfig) continue
+
+              if (newConfig.required !== undefined) {
+                fieldConfig.required = newConfig.required
+                fieldState.required = newConfig.required
+              }
+
+              if (newConfig.requiredErrorMsg !== undefined) {
+                fieldConfig.requiredErrorMsg = newConfig.requiredErrorMsg
+              }
+
+              if (Object.hasOwn(newConfig, 'initialValue')) {
+                fieldConfig.initialValue = newConfig.initialValue
+                fieldState.initialValue = newConfig.initialValue
               }
 
               if (Object.hasOwn(newConfig, 'value')) {
-                throw new Error("Can't set value when replacing/adding fields")
+                fieldState.value = newConfig.value
               }
 
-              const config = {
-                initialValue: newConfig.initialValue,
-                required: newConfig.required ?? false,
-                requiredErrorMsg: newConfig.requiredErrorMsg,
-                derived: {
+              if (newConfig.isTouched !== undefined) {
+                fieldState.isTouched = newConfig.isTouched
+              }
+
+              if (newConfig.fieldIsValid !== undefined) {
+                fieldConfig.validations = newConfig.fieldIsValid
+              }
+
+              if (newConfig.checkIfIsEmpty !== undefined) {
+                fieldConfig.derived = {
+                  ...fieldConfig.derived,
                   checkIfIsEmpty: newConfig.checkIfIsEmpty,
+                }
+              }
+
+              if (newConfig.derivedRequired !== undefined) {
+                fieldConfig.derived = {
+                  ...fieldConfig.derived,
                   required: newConfig.derivedRequired,
-                },
-                validations: newConfig.fieldIsValid,
-                metadata: newConfig.metadata,
-                arrayConfig: fieldConfig?.arrayConfig,
+                }
               }
 
-              formConfig.fieldsMap.set(id, config)
-
-              draft.fields[id] = getInitialStateFromConfig(config)
-
-              continue
-            }
-
-            if (newConfig === 'remove') {
-              formConfig.fieldsMap.delete(id)
-              delete draft.fields[id]
-
-              continue
-            }
-
-            const fieldState = draft.fields[id]
-
-            if (!fieldConfig) continue
-
-            if (newConfig.required !== undefined) {
-              fieldConfig.required = newConfig.required
-              fieldState.required = newConfig.required
-            }
-
-            if (newConfig.requiredErrorMsg !== undefined) {
-              fieldConfig.requiredErrorMsg = newConfig.requiredErrorMsg
-            }
-
-            if (Object.hasOwn(newConfig, 'initialValue')) {
-              fieldConfig.initialValue = newConfig.initialValue
-              fieldState.initialValue = newConfig.initialValue
-            }
-
-            if (Object.hasOwn(newConfig, 'value')) {
-              fieldState.value = newConfig.value
-            }
-
-            if (newConfig.isTouched !== undefined) {
-              fieldState.isTouched = newConfig.isTouched
-            }
-
-            if (newConfig.fieldIsValid !== undefined) {
-              fieldConfig.validations = newConfig.fieldIsValid
-            }
-
-            if (newConfig.checkIfIsEmpty !== undefined) {
-              fieldConfig.derived = {
-                ...fieldConfig.derived,
-                checkIfIsEmpty: newConfig.checkIfIsEmpty,
+              if (newConfig.metadata !== undefined) {
+                fieldConfig._metadata = newConfig.metadata
+                fieldState.metadata = newConfig.metadata
               }
             }
 
-            if (newConfig.derivedRequired !== undefined) {
-              fieldConfig.derived = {
-                ...fieldConfig.derived,
-                required: newConfig.derivedRequired,
+            if (
+              fieldsUpdateMode === 'mergeAndRemoveExcessFields' ||
+              fieldsUpdateMode === 'overrideAll'
+            ) {
+              for (const [id] of objectTypedEntries(draft.fields)) {
+                if (!fields[id]) {
+                  formConfig.fieldsMap.delete(id)
+                  delete draft.fields[id]
+                }
               }
             }
+          })
+        }
 
-            if (newConfig.metadata !== undefined) {
-              fieldConfig.metadata = newConfig.metadata
-              fieldState.metadata = newConfig.metadata
-            }
-          }
-
-          if (mode === 'mergeAndRemoveExcessFields' || mode === 'overrideAll') {
-            for (const [id] of objectTypedEntries(draft.fields)) {
-              if (!fieldsToUpdate[id]) {
-                formConfig.fieldsMap.delete(id)
-                delete draft.fields[id]
-              }
-            }
-          }
-        })
+        if (formMetadata !== undefined) {
+          formStore.produceState((draft) => {
+            draft.formMetadata = formMetadata
+            formConfig.formMetadata = formMetadata
+          })
+        }
 
         forceFormUpdate(true)
       })
@@ -589,7 +635,7 @@ function getInitialStateFromConfig<T extends FieldsInitialConfig>(
     isEmpty: true,
     isTouched: false,
     isDiffFromInitial: false,
-    metadata: config.metadata,
+    metadata: config._metadata,
     isLoading: false,
   }
 }
@@ -701,7 +747,10 @@ function updateDerivedConfig(
         throw new Error(`Field with id "${String(id)}" not found`)
       }
 
-      const newRequired = fieldConfig.derived.required(formState.fields)
+      const newRequired = fieldConfig.derived.required({
+        fields: formState.fields,
+        formMetadata: formState.formMetadata,
+      })
 
       if (newRequired !== fieldState.required) {
         fieldState.required = newRequired
@@ -739,9 +788,11 @@ function performFormValidation(
         : [fieldConfig.validations]
 
       for (const validation of validations) {
-        const result = validation(fieldState.value, {
-          metadata: fieldConfig.metadata,
-          formState: formState.fields,
+        const result = validation({
+          value: fieldState.value,
+          fieldMetadata: fieldState.metadata,
+          formMetadata: formState.formMetadata,
+          fields: formState.fields,
         })
 
         if (result !== true) {
@@ -768,20 +819,22 @@ function performFormValidation(
   }
 }
 
-export type DynamicFormConfig<V, M = unknown> = Record<
+export type DynamicFormConfig<V, M = undefined, FM = undefined> = Record<
   string,
-  UpdateFieldConfig<DynamicFormInitialConfig<V, M>, string>
+  UpdateFieldConfig<DynamicFormInitialConfig<V, M>, string, FM>
 >
 
-export type DynamicFormStore<V, M = unknown> = FormStore<
-  DynamicFormInitialConfig<V, M>
->
+export type DynamicFormStore<
+  Value,
+  FieldMetadata = undefined,
+  FormMetadata = undefined,
+> = FormStore<DynamicFormInitialConfig<Value, FieldMetadata>, FormMetadata>
 
-export function useDynamicForm<V, M = unknown>({
+export function useDynamicForm<V, M = undefined, FM = undefined>({
   getInitialConfig,
   advancedFormValidation,
 }: {
-  getInitialConfig: () => DynamicFormConfig<V, M>
+  getInitialConfig: () => DynamicFormConfig<V, M, FM>
   advancedFormValidation?: AdvancedFormValidation<
     DynamicFormInitialConfig<V, M>
   >
@@ -791,9 +844,13 @@ export function useDynamicForm<V, M = unknown>({
 
     const config: DynamicFormInitialConfig<V, M> = {}
     const derivatedConfig: FieldsDerivatedConfig<
-      DynamicFormInitialConfig<V, M>
+      DynamicFormInitialConfig<V, M>,
+      FM
     > = {}
-    const fieldIsValid: FieldsValidation<DynamicFormInitialConfig<V, M>> = {}
+    const fieldIsValid: FieldsValidation<
+      DynamicFormInitialConfig<V, M>,
+      FM
+    > = {}
 
     for (const [id, fieldConfig] of objectTypedEntries(initialConfig)) {
       if (!Object.hasOwn(fieldConfig, 'initialValue')) {
@@ -824,6 +881,7 @@ export function useDynamicForm<V, M = unknown>({
       derivatedConfig,
       fieldIsValid,
       advancedFormValidation,
+      formMetadata: initialConfig.formMetadata,
     }
   })
 

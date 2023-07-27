@@ -63,7 +63,10 @@ test('useDynamicForm', async () => {
     })
 
     useOnChange(fieldsId, () => {
-      updateConfig(getInitialConfig(fieldsId), 'overrideAll')
+      updateConfig({
+        fields: getInitialConfig(fieldsId),
+        fieldsUpdateMode: 'overrideAll',
+      })
     })
 
     const formFieldsId = formStore.useSelector((state) =>

@@ -28,7 +28,7 @@ test('update a field config', () => {
         password: { initialValue: '' },
       },
       fieldIsValid: {
-        password: (value) => (value === 'wrong' ? 'Wrong password' : true),
+        password: ({ value }) => (value === 'wrong' ? 'Wrong password' : true),
       },
     })
 
@@ -59,7 +59,7 @@ test('update a field config', () => {
       "
     `)
 
-  updateConfigAction.call([{ password: { required: true } }])
+  updateConfigAction.call([{ fields: { password: { required: true } } }])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
@@ -72,7 +72,9 @@ test('update a field config', () => {
       "
     `)
 
-  updateConfigAction.call([{ password: { initialValue: 'initial value' } }])
+  updateConfigAction.call([
+    { fields: { password: { initialValue: 'initial value' } } },
+  ])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
@@ -86,7 +88,7 @@ test('update a field config', () => {
     `)
 
   setPassword.call('12345')
-  updateConfigAction.call([{ password: { isTouched: false } }])
+  updateConfigAction.call([{ fields: { password: { isTouched: false } } }])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
@@ -106,9 +108,11 @@ test('update a field config', () => {
 
   updateConfigAction.call([
     {
-      password: {
-        fieldIsValid: (value) => (value === '12345' ? 'Invalid' : true),
-        isTouched: true,
+      fields: {
+        password: {
+          fieldIsValid: ({ value }) => (value === '12345' ? 'Invalid' : true),
+          isTouched: true,
+        },
       },
     },
   ])
@@ -126,8 +130,10 @@ test('update a field config', () => {
 
   updateConfigAction.call([
     {
-      password: {
-        checkIfIsEmpty: (value) => value === '12345',
+      fields: {
+        password: {
+          checkIfIsEmpty: (value) => value === '12345',
+        },
       },
     },
   ])
@@ -145,8 +151,10 @@ test('update a field config', () => {
 
   updateConfigAction.call([
     {
-      password: {
-        derivedRequired: (fields) => fields.password.value !== '12345',
+      fields: {
+        password: {
+          derivedRequired: ({ fields }) => fields.password.value !== '12345',
+        },
       },
     },
   ])
@@ -162,7 +170,9 @@ test('update a field config', () => {
       "
     `)
 
-  updateConfigAction.call([{ password: { metadata: { foo: 'bar' } } }])
+  updateConfigAction.call([
+    { fields: { password: { metadata: { foo: 'bar' } } } },
+  ])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
@@ -182,7 +192,9 @@ test('remove field', () => {
   const removeField = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<DynamicFormInitialConfig<string>>({
+    const { useFormState, updateConfig } = useForm<
+      DynamicFormInitialConfig<string>
+    >({
       initialConfig: {
         password: { initialValue: '' },
         name: { initialValue: '' },
@@ -198,7 +210,7 @@ test('remove field', () => {
     })
 
     removeField.useOnAction(() => {
-      updateConfig({ password: 'remove' })
+      updateConfig({ fields: { password: 'remove' } })
     })
   })
 
@@ -233,7 +245,9 @@ test('add field', () => {
   const addField = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<DynamicFormInitialConfig<string>>({
+    const { useFormState, updateConfig } = useForm<
+      DynamicFormInitialConfig<string>
+    >({
       initialConfig: {
         password: { initialValue: '' },
       },
@@ -248,7 +262,7 @@ test('add field', () => {
     })
 
     addField.useOnAction(() => {
-      updateConfig({ name: { initialValue: '' } })
+      updateConfig({ fields: { name: { initialValue: '' } } })
     })
   })
 
@@ -277,7 +291,9 @@ test('merge and removeExcess', () => {
   const mergeAndRemoveExcess = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<DynamicFormInitialConfig<string>>({
+    const { useFormState, updateConfig } = useForm<
+      DynamicFormInitialConfig<string>
+    >({
       initialConfig: {
         password: { initialValue: '' },
         name: { initialValue: '' },
@@ -293,12 +309,10 @@ test('merge and removeExcess', () => {
     })
 
     mergeAndRemoveExcess.useOnAction(() => {
-      updateConfig(
-        {
-          password: { initialValue: '12345' },
-        },
-        'mergeAndRemoveExcessFields',
-      )
+      updateConfig({
+        fields: { password: { initialValue: '12345' } },
+        fieldsUpdateMode: 'mergeAndRemoveExcessFields',
+      })
     })
   })
   mergeAndRemoveExcess.call()
@@ -326,7 +340,9 @@ test('override some fields', () => {
   const overrideSomeFields = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<DynamicFormInitialConfig<string>>({
+    const { useFormState, updateConfig } = useForm<
+      DynamicFormInitialConfig<string>
+    >({
       initialConfig: {
         password: {
           initialValue: '',
@@ -347,7 +363,9 @@ test('override some fields', () => {
 
     overrideSomeFields.useOnAction(() => {
       updateConfig({
-        password: { initialValue: '12345', replace: true },
+        fields: {
+          password: { initialValue: '12345', replace: true },
+        },
       })
     })
   })
@@ -378,7 +396,9 @@ test('override all', () => {
   const overrideAll = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<DynamicFormInitialConfig<string>>({
+    const { useFormState, updateConfig } = useForm<
+      DynamicFormInitialConfig<string>
+    >({
       initialConfig: {
         password: {
           initialValue: '',
@@ -398,13 +418,13 @@ test('override all', () => {
     })
 
     overrideAll.useOnAction(() => {
-      updateConfig(
-        {
+      updateConfig({
+        fields: {
           password: { initialValue: '12345' },
           newField: { initialValue: 'new field', required: true },
         },
-        'overrideAll',
-      )
+        fieldsUpdateMode: 'overrideAll',
+      })
     })
   })
 
@@ -423,6 +443,82 @@ test('override all', () => {
     ⎢ formIsValid: true
     ⎢ password: {val:12345, initV:12345, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
     ⎢ newField: {val:new field, initV:new field, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    └─
+    "
+  `)
+})
+
+test('update form metadata', () => {
+  const renders = createRenderStore()
+
+  type Metadata = 'invalid' | 'required' | null
+
+  const updateFormMetadata = emulateAction<Metadata>()
+
+  renderHook(() => {
+    const { useFormState, formStore, updateConfig } = useForm({
+      initialFormMetadata: 'invalid' as Metadata,
+      initialConfig: {
+        password: {
+          initialValue: '',
+        },
+      },
+      fieldIsValid: {
+        password: ({ formMetadata }) => {
+          if (formMetadata === 'invalid') {
+            return 'Invalid'
+          }
+
+          return true
+        },
+      },
+      derivatedConfig: {
+        password: {
+          required: ({ formMetadata }) => {
+            return formMetadata === 'required'
+          },
+        },
+      },
+    })
+
+    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const formMetadata = formStore.useSelector((state) => state.formMetadata)
+
+    renders.add({
+      isDiffFromInitial,
+      formIsValid,
+      metadata: formMetadata,
+      ...simplifyFieldsState(formFields),
+    })
+
+    updateFormMetadata.useOnAction((metadata) => {
+      updateConfig({ formMetadata: metadata })
+    })
+  })
+
+  updateFormMetadata.call('required')
+
+  updateFormMetadata.call(null)
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⎢ isDiffFromInitial: false
+    ⎢ formIsValid: false
+    ⎢ metadata: invalid
+    ⎢ password: {val:, initV:, req:N, errors:[Invalid], isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    ┌─
+    ⎢ isDiffFromInitial: false
+    ⎢ formIsValid: false
+    ⎢ metadata: required
+    ⎢ password: {val:, initV:, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    ┌─
+    ⎢ isDiffFromInitial: false
+    ⎢ formIsValid: true
+    ⎢ metadata: null
+    ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     "
   `)
