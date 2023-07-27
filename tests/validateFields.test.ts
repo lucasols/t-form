@@ -325,7 +325,7 @@ describe('validate form', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          array: { initialValue: '' },
+          name: { initialValue: '' },
           age: { initialValue: 0 },
         },
         advancedFormValidation({ fieldsState, setFormError }) {
