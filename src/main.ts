@@ -27,6 +27,22 @@ type FieldDerivatedConfig<T, F extends FieldsState<any>, FM> = {
   required?: (context: { fields: F; formMetadata: FM }) => boolean
 }
 
+type SilentInvalid = { silentInvalid: true }
+type ValueIsLoading = { valueIsLoading: true }
+type SilentIfNotTouched = { silentIfNotTouched: string | string[] }
+
+export const invalidFormField: {
+  silentInvalid: SilentInvalid
+  valueIsLoading: ValueIsLoading
+  silentIfNotTouched: (msg: string | string[]) => SilentIfNotTouched
+} = {
+  silentInvalid: { silentInvalid: true },
+  valueIsLoading: { valueIsLoading: true },
+  silentIfNotTouched: (msg: string | string[]) => ({
+    silentIfNotTouched: msg,
+  }),
+}
+
 type FieldIsValid<T, M, F extends FieldsState<any>, FM> = (context: {
   value: T
   fieldMetadata: M
