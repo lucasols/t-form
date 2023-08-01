@@ -955,7 +955,7 @@ export type GetFieldInitialConfig<V, M> = {
   required?: boolean
   requiredErrorMsg?: string | false
   metadata?: M
-  validation?: FieldInitialConfigValidation<V, M>
+  isValid?: FieldInitialConfigValidation<V, M>
 }
 
 export function getFieldConfig<V, M = undefined>({
@@ -963,14 +963,14 @@ export function getFieldConfig<V, M = undefined>({
   required,
   requiredErrorMsg,
   metadata,
-  validation: fieldIsValid,
+  isValid,
 }: GetFieldInitialConfig<V, M>): FieldInitialConfig<V, M> {
   return {
     initialValue,
     required,
     requiredErrorMsg,
     metadata,
-    _validation: fieldIsValid,
+    _validation: isValid,
   }
 }
 

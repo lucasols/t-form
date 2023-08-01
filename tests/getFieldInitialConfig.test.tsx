@@ -16,7 +16,7 @@ describe('with getFieldInitialConfig', () => {
         initialConfig: {
           password: getFieldConfig({
             initialValue: '',
-            validation: ({ value }) =>
+            isValid: ({ value }) =>
               value.length < 8
                 ? 'Password must have at least 8 characters'
                 : true,
@@ -78,7 +78,7 @@ describe('update field initial config validation', () => {
         initialConfig: {
           password: getFieldConfig({
             initialValue: '1234567',
-            validation: ({ value }) =>
+            isValid: ({ value }) =>
               value.length < 8
                 ? 'Password must have at least 8 characters'
                 : true,
