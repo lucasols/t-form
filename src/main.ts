@@ -5,6 +5,8 @@ import { mapObjectToObject, objectTypedEntries } from './utils/object'
 import { SetValue, unwrapSetterValue } from './utils/unwrapSetterValue'
 import { keepPrevIfUnchanged, unwrapGetterOrValue } from './utils/utils'
 import { invariant, isObject } from './utils/assertions'
+import { SingleOrMultiple } from './utils/typing'
+import { singleOrMultipleToArray } from './utils/arrays'
 
 const globalConfig = {
   defaultRequiredMsg: 'This field is required',
@@ -15,11 +17,26 @@ export function setGlobalConfig(config: Partial<typeof globalConfig>) {
   Object.assign(globalConfig, config)
 }
 
+export type FieldInitialConfigValidation<V, M> = SingleOrMultiple<
+  (args: {
+    value: V
+    fieldMetadata?: M
+  }) =>
+    | true
+    | string
+    | string[]
+    | SilentInvalid
+    | SilentInvalidIfNotTouched
+    | InvalidValueIsLoading
+>
+
 type FieldInitialConfig<T = unknown, M = unknown> = {
   initialValue: T
   required?: boolean
   metadata?: M
   requiredErrorMsg?: string | false
+  /** @internal */
+  _validation?: FieldInitialConfigValidation<any, any>
 }
 
 type FieldDerivatedConfig<T, F extends FieldsState<any>, FM> = {
@@ -54,18 +71,19 @@ type FieldIsValid<T, M, F extends FieldsState<any>, FM> = (context: {
   | true
   | string
   | string[]
-  | { silentInvalid: true }
-  | { valueIsLoading: true }
-  | { silentIfNotTouched: string | string[] }
+  | SilentInvalid
+  | InvalidValueIsLoading
+  | SilentInvalidIfNotTouched
 
 type FieldValidation<T, M, F extends FieldsState<any>, FM> =
   | FieldIsValid<T, M, F, FM>
   | FieldIsValid<T, M, F, FM>[]
 
-type FieldConfig = Omit<FieldInitialConfig, 'metadata'> & {
+type FieldConfig = Omit<FieldInitialConfig, 'metadata' | '_validation'> & {
   _metadata?: any
   derived: FieldDerivatedConfig<unknown, any, any> | undefined
   validations: FieldValidation<unknown, unknown, any, any> | undefined
+  simpleValidations: FieldInitialConfigValidation<unknown, unknown> | undefined
   arrayConfig:
     | ArrayFieldsConfig<
         Record<string, FieldInitialConfig<any[], unknown>>
@@ -139,6 +157,10 @@ export type UpdateFieldConfig<
     fields: FieldsState<T>
     formMetadata: FM
   }) => boolean
+  simpleFieldIsValid?: FieldInitialConfigValidation<
+    T[K]['initialValue'],
+    T[K]['metadata']
+  >
   fieldIsValid?: FieldValidation<
     T[K]['initialValue'],
     T[K]['metadata'],
@@ -203,6 +225,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
         derived: derivatedConfig?.[id],
         validations: fieldValidations?.[id],
         arrayConfig: arraysConfig?.[id],
+        simpleValidations: initialConfig._validation,
       })
     }
 
@@ -445,7 +468,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                   )
                 }
 
-                const config = {
+                const config: FieldConfig = {
                   initialValue: newConfig.initialValue,
                   required: newConfig.required ?? false,
                   requiredErrorMsg: newConfig.requiredErrorMsg,
@@ -454,8 +477,9 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                     required: newConfig.derivedRequired,
                   },
                   validations: newConfig.fieldIsValid,
-                  metadata: newConfig.metadata,
+                  _metadata: newConfig.metadata,
                   arrayConfig: fieldConfig?.arrayConfig,
+                  simpleValidations: fieldConfig?.simpleValidations,
                 }
 
                 formConfig.fieldsMap.set(id, config)
@@ -500,6 +524,10 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
               if (newConfig.fieldIsValid !== undefined) {
                 fieldConfig.validations = newConfig.fieldIsValid
+              }
+
+              if (newConfig.simpleFieldIsValid !== undefined) {
+                fieldConfig.simpleValidations = newConfig.simpleFieldIsValid
               }
 
               if (newConfig.checkIfIsEmpty !== undefined) {
@@ -805,49 +833,47 @@ function performFormValidation(
     if (!fieldState) {
       throw new Error(`Field with id "${String(id)}" not found`)
     }
+    const validations = [
+      ...singleOrMultipleToArray(fieldConfig.validations),
+      ...singleOrMultipleToArray(fieldConfig.simpleValidations),
+    ]
 
-    if (fieldConfig.validations) {
-      const validations = Array.isArray(fieldConfig.validations)
-        ? fieldConfig.validations
-        : [fieldConfig.validations]
+    for (const validation of validations) {
+      const result = validation({
+        value: fieldState.value,
+        fieldMetadata: fieldState.metadata,
+        formMetadata: formState.formMetadata,
+        fields: formState.fields,
+      })
 
-      for (const validation of validations) {
-        const result = validation({
-          value: fieldState.value,
-          fieldMetadata: fieldState.metadata,
-          formMetadata: formState.formMetadata,
-          fields: formState.fields,
-        })
+      if (result !== true) {
+        fieldState.isValid = false
 
-        if (result !== true) {
-          fieldState.isValid = false
+        if (typeof result === 'string') {
+          if (!fieldState.errors) {
+            fieldState.errors = []
+          }
 
-          if (typeof result === 'string') {
+          fieldState.errors.push(result)
+        } else if (Array.isArray(result)) {
+          if (!fieldState.errors) {
+            fieldState.errors = []
+          }
+
+          fieldState.errors.push(...result)
+        } else if ('valueIsLoading' in result) {
+          fieldState.valueIsLoading = true
+        } else if ('silentIfNotTouched' in result) {
+          if (fieldState.isTouched) {
             if (!fieldState.errors) {
               fieldState.errors = []
             }
 
-            fieldState.errors.push(result)
-          } else if (Array.isArray(result)) {
-            if (!fieldState.errors) {
-              fieldState.errors = []
-            }
-
-            fieldState.errors.push(...result)
-          } else if ('valueIsLoading' in result) {
-            fieldState.valueIsLoading = true
-          } else if ('silentIfNotTouched' in result) {
-            if (fieldState.isTouched) {
-              if (!fieldState.errors) {
-                fieldState.errors = []
-              }
-
-              fieldState.errors.push(
-                ...(Array.isArray(result.silentIfNotTouched)
-                  ? result.silentIfNotTouched
-                  : [result.silentIfNotTouched]),
-              )
-            }
+            fieldState.errors.push(
+              ...(Array.isArray(result.silentIfNotTouched)
+                ? result.silentIfNotTouched
+                : [result.silentIfNotTouched]),
+            )
           }
         }
       }
@@ -922,6 +948,30 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
   })
 
   return useForm(config)
+}
+
+export type GetFieldInitialConfig<V, M> = {
+  initialValue: V
+  required?: boolean
+  requiredErrorMsg?: string | false
+  metadata?: M
+  validation?: FieldInitialConfigValidation<V, M>
+}
+
+export function getFieldConfig<V, M = undefined>({
+  initialValue,
+  required,
+  requiredErrorMsg,
+  metadata,
+  validation: fieldIsValid,
+}: GetFieldInitialConfig<V, M>): FieldInitialConfig<V, M> {
+  return {
+    initialValue,
+    required,
+    requiredErrorMsg,
+    metadata,
+    _validation: fieldIsValid,
+  }
 }
 
 export function normalizeFormValue(value: unknown) {

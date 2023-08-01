@@ -16,3 +16,13 @@ export function filterAndMap<T, R>(
 
   return result
 }
+
+export function singleOrMultipleToArray<T>(
+  value: T | T[] | undefined | null,
+): T[] {
+  return Array.isArray(value)
+    ? value
+    : value === undefined || value === null
+    ? []
+    : [value]
+}
