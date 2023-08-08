@@ -141,7 +141,7 @@ describe('handle change', () => {
       renders.add(simplifyFieldsState(formFields))
 
       setValues.useOnAction(([name, age]) => {
-        handleChange({ name, age: () => age })
+        handleChange({ name, age: (old) => old + age })
       })
     })
 
@@ -155,7 +155,7 @@ describe('handle change', () => {
       └─
       ┌─
       ⎢ name: {val:Jack, initV:John, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
-      ⎢ age: {val:20, initV:10, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+      ⎢ age: {val:30, initV:10, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
       └─
       "
     `)

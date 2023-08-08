@@ -344,7 +344,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     <K extends FieldsId>(
       ...args:
         | [id: K, value: ValueArg<K>, skipTouch?: boolean]
-        | [fields: { [P in K]?: ValueArg<K> }, skipTouch?: boolean]
+        | [fields: { [P in K]?: ValueArg<P> }, skipTouch?: boolean]
     ) => {
       const firstArg = args[0]
       const skipTouch =
