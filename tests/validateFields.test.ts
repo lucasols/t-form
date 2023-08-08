@@ -422,12 +422,12 @@ test('force form validation', () => {
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
     "
     ┌─
-    ⎢ validationWasForced: false
+    ⎢ validationWasForced: 0
     ⎢ formIsValid: false
     ⎢ age: {val:null, initV:null, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     ┌─
-    ⎢ validationWasForced: true
+    ⎢ validationWasForced: 1
     ⎢ formIsValid: false
     ⎢ age: {val:null, initV:null, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:N, isL:N}
     └─
@@ -440,7 +440,7 @@ test('force form validation', () => {
     "
     ---
     ┌─
-    ⎢ validationWasForced: true
+    ⎢ validationWasForced: 1
     ⎢ formIsValid: true
     ⎢ age: {val:17, initV:null, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
     └─
