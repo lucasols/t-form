@@ -97,7 +97,7 @@ type FormStoreState<T extends FieldsInitialConfig, M = unknown> = {
   }
   formError: string | false
   formMetadata: M
-  validationWasForced: boolean
+  validationWasForced: number
 }
 
 type FieldsInitialConfig = Record<string, FieldInitialConfig>
@@ -260,7 +260,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     const formStoreState: InternalFormStoreState = {
       fields: {} as any,
       formError: false,
-      validationWasForced: false,
+      validationWasForced: 0,
       formMetadata: formConfig.formMetadata as M,
     }
 
@@ -313,7 +313,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
         ][]
         formError: string | false
         someFieldIsLoading: boolean
-        validationWasForced: boolean
+        validationWasForced: number
         isDiffFromInitial: boolean
         formIsValid: boolean
       }
@@ -404,7 +404,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
   const forceFormValidation = useCallback(() => {
     formStore.batch(() => {
-      formStore.setKey('validationWasForced', true)
+      formStore.setKey('validationWasForced', (v) => v + 1)
 
       forceFormUpdate(false)
     })
