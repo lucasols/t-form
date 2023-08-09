@@ -20,7 +20,7 @@ specifiers:
   prettier: ^3.0.0
   react: ^18.2.0
   react-dom: ^18.2.0
-  t-state: ^8.8.0
+  t-state: ^8.10.0
   tsm: ^2.3.0
   tsup: ^7.1.0
   typescript: ^5.1.6
@@ -29,7 +29,7 @@ specifiers:
 
 dependencies:
   immer: 10.0.2
-  t-state: 8.8.0_biqbaboplfbrettd7655fr4n2y
+  t-state: 8.10.0_biqbaboplfbrettd7655fr4n2y
 
 devDependencies:
   '@lucasols/eslint-plugin-extended-lint': 0.10.0_ko3fmmbeyij36muomfgt2u76xu
@@ -1940,10 +1940,6 @@ packages:
     resolution: {integrity: sha512-Rx3CqeqQ19sxUtYV9CU911Vhy8/721wRFnJv3REVGWUmoAcIwzifTsdmJte/MV+0/XpM35LZdQMBGkRIoLPwQA==}
     dev: false
 
-  /immer/9.0.21:
-    resolution: {integrity: sha512-bc4NBHqOqSfRW7POMkHd51LvClaeMXpm8dx0e8oE2GORbq5aRK7Bxl4FyzVLdGtLmvLKL7BTDBG5ACQm4HWjTA==}
-    dev: false
-
   /import-fresh/3.3.0:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
     engines: {node: '>=6'}
@@ -2829,14 +2825,14 @@ packages:
       has-flag: 4.0.0
     dev: true
 
-  /t-state/8.8.0_biqbaboplfbrettd7655fr4n2y:
-    resolution: {integrity: sha512-cGb48wulJyYbx+s5udm16qi/E47WaMtL4egteBlWyIqNsr8Tj/h4hiuDrFLqcVw0HM+XOD2ynVnvZqh969brpQ==}
+  /t-state/8.10.0_biqbaboplfbrettd7655fr4n2y:
+    resolution: {integrity: sha512-oabhyEJtuQUtcYBwnmM5CDBbJ8pkI+hPD4OZjDoccDR6JA8OeKadPw23m2Q73A0OL/mR0NhgkBPNGneBYiU/UA==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       react: ^18.0.0
       react-dom: ^18.0.0
     dependencies:
-      immer: 9.0.21
+      immer: 10.0.2
       nanoid: 4.0.2
       react: 18.2.0
       react-dom: 18.2.0_react@18.2.0

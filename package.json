@@ -65,6 +65,6 @@
   },
   "dependencies": {
     "immer": "^10.0.2",
-    "t-state": "^8.8.0"
+    "t-state": "^8.10.0"
   }
 }
