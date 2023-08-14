@@ -144,7 +144,7 @@ test('update a field config', () => {
       ┌─
       ⎢ isDiffFromInitial: true
       ⎢ formIsValid: false
-      ⎢ password: {val:12345, initV:initial value, req:Y, errors:[This field is required, Invalid], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
+      ⎢ password: {val:12345, initV:initial value, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
       └─
       "
     `)

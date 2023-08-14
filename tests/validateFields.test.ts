@@ -145,6 +145,7 @@ describe('validate field', () => {
     })
 
     setPassword.call('12345678')
+    setConfirmPassword.call('123456789')
 
     expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
@@ -154,7 +155,11 @@ describe('validate field', () => {
       └─
       ┌─
       ⎢ password: {value:12345678, errors:null, isValid:true}
-      ⎢ confirmPassword: {value:, errors:[Passwords must match], isValid:false}
+      ⎢ confirmPassword: {value:, errors:null, isValid:false}
+      └─
+      ┌─
+      ⎢ password: {value:12345678, errors:null, isValid:true}
+      ⎢ confirmPassword: {value:123456789, errors:[Passwords must match], isValid:false}
       └─
       "
     `)
@@ -486,6 +491,123 @@ test('silentIfNotTouched error', () => {
     "
     age: {val:16, initV:16, req:Y, errors:null, isValid:N, isEmpty:N, isTouched:N, isDiff:N, isL:N}
     age: {val:17, initV:16, req:Y, errors:[You must be at least 18 years old], isValid:N, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    "
+  `)
+})
+
+test('warnings', () => {
+  const renders = createRenderStore()
+
+  const setAge = emulateAction<number>()
+
+  renderHook(() => {
+    const { useFormState, handleChange } = useForm({
+      initialConfig: {
+        age: { initialValue: 16 as number, required: true },
+      },
+      fieldIsValid: {
+        age: ({ value }) => {
+          return value < 18
+            ? { warning: 'You must be at least 18 years old' }
+            : true
+        },
+      },
+    })
+
+    const { formFields, formIsValid } = useFormState()
+
+    renders.add({
+      age: simplifyFieldState(formFields.age),
+      formIsValid,
+    })
+
+    setAge.useOnAction((age) => {
+      handleChange('age', age)
+    })
+  })
+
+  setAge.call(17)
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⎢ age: {val:16, initV:16, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N, warnings:[You must be at least 18 years old]}
+    ⎢ formIsValid: true
+    └─
+    ┌─
+    ⎢ age: {val:17, initV:16, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N, warnings:[You must be at least 18 years old]}
+    ⎢ formIsValid: true
+    └─
+    "
+  `)
+})
+
+test('add temp error', () => {
+  const renders = createRenderStore()
+
+  const addTempError = emulateAction<string>()
+  const setAge = emulateAction<number>()
+  const setName = emulateAction<string>()
+
+  renderHook(() => {
+    const { useFormState, handleChange, setTemporaryError } = useForm({
+      initialConfig: {
+        age: { initialValue: 16 as number, required: true },
+        name: { initialValue: '' },
+      },
+    })
+
+    const { formFields, formIsValid } = useFormState()
+
+    renders.add({
+      age: simplifyFieldState(formFields.age),
+      name: simplifyFieldState(formFields.name),
+      formIsValid,
+    })
+
+    addTempError.useOnAction((error) => {
+      setTemporaryError({
+        age: error,
+      })
+    })
+
+    setAge.useOnAction((age) => {
+      handleChange('age', age)
+    })
+
+    setName.useOnAction((name) => {
+      handleChange('name', name)
+    })
+  })
+
+  addTempError.call('You must be at least 18 years old')
+
+  setName.call('Adult')
+
+  setAge.call(17)
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⎢ age: {val:16, initV:16, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⎢ formIsValid: true
+    └─
+    ┌─
+    ⎢ age: {val:16, initV:16, req:Y, errors:[You must be at least 18 years old], isValid:N, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⎢ formIsValid: false
+    └─
+    ┌─
+    ⎢ age: {val:16, initV:16, req:Y, errors:[You must be at least 18 years old], isValid:N, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⎢ name: {val:Adult, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    ⎢ formIsValid: false
+    └─
+    ┌─
+    ⎢ age: {val:17, initV:16, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    ⎢ name: {val:Adult, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    ⎢ formIsValid: true
+    └─
     "
   `)
 })

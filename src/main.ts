@@ -35,6 +35,7 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
   required?: boolean
   metadata?: M
   requiredErrorMsg?: string | false
+  advancedCustomValue?: T
   /** @internal */
   _validation?: FieldInitialConfigValidation<any, any>
 }
@@ -49,17 +50,20 @@ export type InvalidValueIsLoading = { valueIsLoading: true }
 export type SilentInvalidIfNotTouched = {
   silentIfNotTouched: string | string[]
 }
+export type Warning = {
+  warning: string | string[]
+}
 
 export const invalidFormField: {
   silentInvalid: SilentInvalid
   valueIsLoading: InvalidValueIsLoading
   silentIfNotTouched: (msg: string | string[]) => SilentInvalidIfNotTouched
+  warning: (msg: string | string[]) => Warning
 } = {
   silentInvalid: { silentInvalid: true },
   valueIsLoading: { valueIsLoading: true },
-  silentIfNotTouched: (msg: string | string[]) => ({
-    silentIfNotTouched: msg,
-  }),
+  silentIfNotTouched: (msg: string | string[]) => ({ silentIfNotTouched: msg }),
+  warning: (msg: string | string[]) => ({ warning: msg }),
 }
 
 type FieldIsValid<T, M, F extends FieldsState<any>, FM> = (context: {
@@ -74,6 +78,7 @@ type FieldIsValid<T, M, F extends FieldsState<any>, FM> = (context: {
   | SilentInvalid
   | InvalidValueIsLoading
   | SilentInvalidIfNotTouched
+  | Warning
 
 type FieldValidation<T, M, F extends FieldsState<any>, FM> =
   | FieldIsValid<T, M, F, FM>
@@ -109,6 +114,7 @@ export type FieldState<V, M> = {
   required: boolean
   isValid: boolean
   errors: string[] | null
+  warnings: string[] | null
   isTouched: boolean
   isDiffFromInitial: boolean
   isEmpty: boolean
@@ -432,6 +438,27 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     [handleChange, formStore],
   )
 
+  const setTemporaryError = useCallback(
+    (fields: { [P in FieldsId]?: string | string[] }) => {
+      formStore.produceState((draft) => {
+        for (const [id, error] of objectTypedEntries(fields)) {
+          const field = draft.fields[id]
+
+          invariant(field, fieldNotFoundMessage(id))
+
+          if (!field.errors) {
+            field.errors = []
+          }
+
+          field.isValid = false
+
+          field.errors.push(...singleOrMultipleToArray(error))
+        }
+      })
+    },
+    [formStore],
+  )
+
   const updateConfig = useCallback(
     ({
       fields,
@@ -662,6 +689,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     forceFormValidation,
     forceFormUpdate,
     arrayFields,
+    setTemporaryError,
   }
 }
 
@@ -689,6 +717,7 @@ function getInitialStateFromConfig<T extends FieldsInitialConfig>(
     isDiffFromInitial: false,
     metadata: config._metadata,
     valueIsLoading: false,
+    warnings: null,
   }
 }
 
@@ -759,6 +788,7 @@ function updateFieldStateFromValue(
   draftField.isValid = validationResults.isValid
   draftField.isEmpty = validationResults.isEmpty
   draftField.valueIsLoading = false
+  draftField.warnings = null
 }
 
 function basicFieldValidation(
@@ -784,7 +814,11 @@ function basicFieldValidation(
     }
   }
 
-  return { errors: errors.length !== 0 ? errors : null, isValid, isEmpty }
+  return {
+    errors: errors.length !== 0 ? errors : null,
+    isValid,
+    isEmpty,
+  }
 }
 
 function updateDerivedConfig(
@@ -838,6 +872,10 @@ function performFormValidation(
       ...singleOrMultipleToArray(fieldConfig.simpleValidations),
     ]
 
+    if (fieldState.required && fieldState.isEmpty) {
+      return
+    }
+
     for (const validation of validations) {
       const result = validation({
         value: fieldState.value,
@@ -847,6 +885,16 @@ function performFormValidation(
       })
 
       if (result !== true) {
+        if (isObject(result) && 'warning' in result) {
+          if (!fieldState.warnings) {
+            fieldState.warnings = []
+          }
+
+          fieldState.warnings.push(...singleOrMultipleToArray(result.warning))
+
+          return
+        }
+
         fieldState.isValid = false
 
         if (typeof result === 'string') {
@@ -870,9 +918,7 @@ function performFormValidation(
             }
 
             fieldState.errors.push(
-              ...(Array.isArray(result.silentIfNotTouched)
-                ? result.silentIfNotTouched
-                : [result.silentIfNotTouched]),
+              ...singleOrMultipleToArray(result.silentIfNotTouched),
             )
           }
         }
