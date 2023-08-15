@@ -873,7 +873,7 @@ function performFormValidation(
     ]
 
     if (fieldState.required && fieldState.isEmpty) {
-      return
+      continue
     }
 
     for (const validation of validations) {
@@ -892,7 +892,7 @@ function performFormValidation(
 
           fieldState.warnings.push(...singleOrMultipleToArray(result.warning))
 
-          return
+          continue
         }
 
         fieldState.isValid = false

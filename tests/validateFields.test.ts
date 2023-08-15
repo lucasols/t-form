@@ -177,6 +177,77 @@ describe('validate field', () => {
     `)
   })
 
+  test('validate field based on other field 2', () => {
+    const renders = createRenderStore()
+
+    const field1 = emulateAction<string>()
+    const field2 = emulateAction<string>()
+    const field3 = emulateAction<string>()
+
+    renderHook(() => {
+      const { useFormState, handleChange } = useForm({
+        initialConfig: {
+          field1: { initialValue: '', required: true },
+          field2: { initialValue: '', required: true },
+          field3: { initialValue: '', required: true },
+        },
+        fieldIsValid: {
+          field2: ({ value, fields }) => {
+            if (
+              value === fields.field1.value ||
+              value === fields.field3.value
+            ) {
+              return 'Field 2 cannot be equal to field 1 or field 3'
+            }
+
+            return true
+          },
+        },
+      })
+
+      const { formFields } = useFormState()
+
+      renders.add(
+        simplifyFieldsState(formFields, ['value', 'errors', 'isValid']),
+      )
+
+      field1.useOnAction((value) => {
+        handleChange('field1', value)
+      })
+
+      field2.useOnAction((value) => {
+        handleChange('field2', value)
+      })
+
+      field3.useOnAction((value) => {
+        handleChange('field3', value)
+      })
+    })
+
+    field3.call('1')
+    field2.call('1')
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      ┌─
+      ⎢ field1: {value:, errors:null, isValid:false}
+      ⎢ field2: {value:, errors:null, isValid:false}
+      ⎢ field3: {value:, errors:null, isValid:false}
+      └─
+      ┌─
+      ⎢ field1: {value:, errors:null, isValid:false}
+      ⎢ field2: {value:, errors:null, isValid:false}
+      ⎢ field3: {value:1, errors:null, isValid:true}
+      └─
+      ┌─
+      ⎢ field1: {value:, errors:null, isValid:false}
+      ⎢ field2: {value:1, errors:[Field 2 cannot be equal to field 1 or field 3], isValid:false}
+      ⎢ field3: {value:1, errors:null, isValid:true}
+      └─
+      "
+    `)
+  })
+
   test('validate based on metadata', () => {
     const renders = createRenderStore()
 
