@@ -66,11 +66,12 @@ export const invalidFormField: {
   warning: (msg: string | string[]) => ({ warning: msg }),
 }
 
-type FieldIsValid<T, M, F extends FieldsState<any>, FM> = (context: {
+type FieldIsValid<T, M, F extends FieldsState<any>, FM, K> = (context: {
   value: T
   fieldMetadata: M
   fields: F
   formMetadata: FM
+  fieldId: K
 }) =>
   | true
   | string
@@ -80,14 +81,14 @@ type FieldIsValid<T, M, F extends FieldsState<any>, FM> = (context: {
   | SilentInvalidIfNotTouched
   | Warning
 
-type FieldValidation<T, M, F extends FieldsState<any>, FM> =
-  | FieldIsValid<T, M, F, FM>
-  | FieldIsValid<T, M, F, FM>[]
+type FieldValidation<T, M, F extends FieldsState<any>, FM, K> =
+  | FieldIsValid<T, M, F, FM, K>
+  | FieldIsValid<T, M, F, FM, K>[]
 
 type FieldConfig = Omit<FieldInitialConfig, 'metadata' | '_validation'> & {
   _metadata?: any
   derived: FieldDerivatedConfig<unknown, any, any> | undefined
-  validations: FieldValidation<unknown, unknown, any, any> | undefined
+  validations: FieldValidation<unknown, unknown, any, any, any> | undefined
   simpleValidations: FieldInitialConfigValidation<unknown, unknown> | undefined
   arrayConfig:
     | ArrayFieldsConfig<
@@ -138,7 +139,8 @@ type FieldsValidation<T extends FieldsInitialConfig, FM> = {
     T[K]['initialValue'],
     T[K]['metadata'],
     { [P in keyof T]: FieldState<T[P]['initialValue'], T[P]['metadata']> },
-    FM
+    FM,
+    K
   >
 }
 
@@ -171,7 +173,8 @@ export type UpdateFieldConfig<
     T[K]['initialValue'],
     T[K]['metadata'],
     FieldsState<T>,
-    FM
+    FM,
+    K
   >
 }
 
@@ -917,6 +920,7 @@ function performFormValidation(
         fieldMetadata: fieldState.metadata,
         formMetadata: formState.formMetadata,
         fields: formState.fields,
+        fieldId: id,
       })
 
       if (result !== true) {
