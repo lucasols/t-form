@@ -1,5 +1,5 @@
 export function objectTypedEntries<T extends Record<string, unknown>>(obj: T) {
-  return Object.entries(obj) as [keyof T, T[keyof T]][]
+  return Object.entries(obj) as [Extract<keyof T, string>, T[keyof T]][]
 }
 
 export function pick<T, K extends keyof T>(

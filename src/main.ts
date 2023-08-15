@@ -241,6 +241,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     }
   })
 
+  const tempErrors = useConst(() => new Map<string, string[]>())
+
   type InternalFormStoreState = FormStoreState<T, M>
 
   function performAdvancedFormValidation(
@@ -274,6 +276,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       formStoreState.fields[id] = getInitialStateFromConfig(config)
 
       updateFieldStateFromValue(
+        id as string,
+        null,
         config,
         config.initialValue,
         formStoreState.fields[id],
@@ -281,26 +285,32 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       )
     }
 
-    performExtraUpdates(formStoreState)
+    performExtraUpdates(formStoreState, null)
 
     return formStoreState
   }
 
   const performExtraUpdates = useCallback(
-    (formStoreState: InternalFormStoreState) => {
+    (
+      formStoreState: InternalFormStoreState,
+      errorWasReseted: Set<string> | null,
+    ) => {
       updateDerivedConfig(
+        errorWasReseted,
         formConfig.fieldsMap as Map<string, FieldConfig>,
         formStoreState,
       )
 
       performFormValidation(
+        errorWasReseted,
         formConfig.fieldsMap as Map<string, FieldConfig>,
         formStoreState,
+        tempErrors,
       )
 
       latestFormValidation.insideMemo(formStoreState)
     },
-    [formConfig, latestFormValidation],
+    [formConfig, latestFormValidation, tempErrors],
   )
 
   const formStore: FormStore<T, M> = useCreateStore<InternalFormStoreState>(
@@ -356,6 +366,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       const skipTouch =
         typeof args[0] === 'string' ? args[2] : (args[1] as boolean | undefined)
 
+      const errorWasReseted = new Set<string>()
+
       const valuesToUpdate: Partial<Record<K, ValueArg<K>>> =
         typeof firstArg !== 'object'
           ? ({ [firstArg]: args[1] } as Record<K, ValueArg<K>>)
@@ -363,6 +375,10 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
       formStore.produceState((draft) => {
         for (const [id, value] of objectTypedEntries(valuesToUpdate)) {
+          if (!skipTouch) {
+            tempErrors.delete(id as string)
+          }
+
           const fieldState = draft.fields[id]
           const fieldConfig = formConfig.fieldsMap.get(id)
 
@@ -375,6 +391,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
           const newValue = unwrapSetterValue(value, fieldState.value)
 
           updateFieldStateFromValue(
+            id as string,
+            errorWasReseted,
             fieldConfig,
             newValue,
             fieldState,
@@ -383,14 +401,15 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
         }
 
         updateDerivedConfig(
+          errorWasReseted,
           formConfig.fieldsMap as Map<string, FieldConfig>,
           draft,
         )
 
-        performExtraUpdates(draft)
+        performExtraUpdates(draft, errorWasReseted)
       })
     },
-    [formStore, formConfig, performExtraUpdates],
+    [formStore, formConfig, performExtraUpdates, tempErrors],
   )
 
   const forceFormUpdate = useCallback(
@@ -440,23 +459,13 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
   const setTemporaryError = useCallback(
     (fields: { [P in FieldsId]?: string | string[] }) => {
-      formStore.produceState((draft) => {
-        for (const [id, error] of objectTypedEntries(fields)) {
-          const field = draft.fields[id]
+      for (const [id, error] of objectTypedEntries(fields)) {
+        tempErrors.set(id, singleOrMultipleToArray(error))
+      }
 
-          invariant(field, fieldNotFoundMessage(id))
-
-          if (!field.errors) {
-            field.errors = []
-          }
-
-          field.isValid = false
-
-          field.errors.push(...singleOrMultipleToArray(error))
-        }
-      })
+      forceFormUpdate(true)
     },
-    [formStore],
+    [forceFormUpdate, tempErrors],
   )
 
   const updateConfig = useCallback(
@@ -753,6 +762,8 @@ export function getGenericFormState<T extends FieldsInitialConfig>(
 }
 
 function updateFieldStateFromValue(
+  fieldId: string,
+  errorWasReseted: Set<string> | null,
   fieldConfig: FieldConfig,
   newValue: unknown,
   draftField: FieldState<unknown, unknown>,
@@ -785,6 +796,7 @@ function updateFieldStateFromValue(
   draftField.errors = draftField.isTouched
     ? keepPrevIfUnchanged(validationResults.errors, draftField.errors)
     : null
+  errorWasReseted?.add(fieldId)
   draftField.isValid = validationResults.isValid
   draftField.isEmpty = validationResults.isEmpty
   draftField.valueIsLoading = false
@@ -822,6 +834,7 @@ function basicFieldValidation(
 }
 
 function updateDerivedConfig(
+  errorWasReseted: Set<string> | null,
   fieldsConfig: Map<string, FieldConfig>,
   formState: FormStoreState<any>,
 ): void {
@@ -850,6 +863,8 @@ function updateDerivedConfig(
           validationResults.errors,
           fieldState.errors,
         )
+        errorWasReseted?.add(id)
+
         fieldState.isValid = validationResults.isValid
         fieldState.isEmpty = validationResults.isEmpty
       }
@@ -858,19 +873,39 @@ function updateDerivedConfig(
 }
 
 function performFormValidation(
+  errorWasReseted: Set<string> | null,
   fieldsConfig: Map<string, FieldConfig>,
   formState: FormStoreState<any>,
+  tempErrors: Map<string, string[]>,
 ): void {
+  if (errorWasReseted) {
+    for (const [id] of fieldsConfig) {
+      const fieldState = formState.fields[id]
+
+      invariant(fieldState, fieldNotFoundMessage(id))
+
+      if (!errorWasReseted.has(id)) {
+        fieldState.errors = null
+      }
+    }
+  }
+
   for (const [id, fieldConfig] of fieldsConfig) {
     const fieldState = formState.fields[id]
 
-    if (!fieldState) {
-      throw new Error(`Field with id "${String(id)}" not found`)
-    }
+    invariant(fieldState, fieldNotFoundMessage(id))
+
     const validations = [
       ...singleOrMultipleToArray(fieldConfig.validations),
       ...singleOrMultipleToArray(fieldConfig.simpleValidations),
     ]
+
+    const tempError = tempErrors.get(id)
+
+    if (tempError) {
+      fieldState.errors = tempError
+      fieldState.isValid = false
+    }
 
     if (fieldState.required && fieldState.isEmpty) {
       continue
