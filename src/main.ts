@@ -910,7 +910,7 @@ function performFormValidation(
       fieldState.isValid = false
     }
 
-    if (fieldState.required && fieldState.isEmpty) {
+    if (fieldState.isEmpty) {
       continue
     }
 

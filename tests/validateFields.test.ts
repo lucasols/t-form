@@ -17,7 +17,7 @@ describe('validate field', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          password: { initialValue: '' },
+          password: { initialValue: 'a' },
         },
         fieldIsValid: {
           password: ({ value }) =>
@@ -42,7 +42,7 @@ describe('validate field', () => {
 
     expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
-      password: {value:, errors:[Password must have at least 8 characters], isValid:false}
+      password: {value:a, errors:[Password must have at least 8 characters], isValid:false}
       password: {value:12345678, errors:null, isValid:true}
       "
     `)
@@ -65,7 +65,7 @@ describe('validate field', () => {
     renderHook(() => {
       const { useFormState, handleChange } = useForm({
         initialConfig: {
-          password: { initialValue: '' },
+          password: { initialValue: 'a' },
         },
         fieldIsValid: {
           password: [
@@ -96,7 +96,7 @@ describe('validate field', () => {
 
     expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
-      password: {value:, errors:[Password must have at least 8 characters, Password must have at least one number], isValid:false}
+      password: {value:a, errors:[Password must have at least 8 characters, Password must have at least one number], isValid:false}
       password: {value:abcdefghij, errors:[Password must have at least one number], isValid:false}
       "
     `)
@@ -756,6 +756,44 @@ test('add temp error', () => {
     ⎢ name: {val:Adult, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
     ⎢ formIsValid: true
     └─
+    "
+  `)
+})
+
+test('do not show validation errors if field is empty', () => {
+  const renders = createRenderStore()
+
+  const setEmail = emulateAction<string>()
+
+  renderHook(() => {
+    const { useFormState, handleChange } = useForm({
+      initialConfig: {
+        email: { initialValue: '' },
+      },
+      fieldIsValid: {
+        email: ({ value }) => {
+          return value.includes('@') ? true : 'Invalid email'
+        },
+      },
+    })
+
+    const { formFields } = useFormState()
+
+    renders.add({
+      email: simplifyFieldState(formFields.email),
+    })
+
+    setEmail.useOnAction((email) => {
+      handleChange('email', email)
+    })
+  })
+
+  setEmail.call('test@email.com')
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    email: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    email: {val:test@email.com, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
     "
   `)
 })

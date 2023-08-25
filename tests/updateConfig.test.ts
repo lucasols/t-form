@@ -160,30 +160,30 @@ test('update a field config', () => {
   ])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ---
-      ┌─
-      ⎢ isDiffFromInitial: true
-      ⎢ formIsValid: false
-      ⎢ password: {val:12345, initV:initial value, req:N, errors:[Invalid], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
-      └─
-      "
-    `)
+    "
+    ---
+    ┌─
+    ⎢ isDiffFromInitial: true
+    ⎢ formIsValid: true
+    ⎢ password: {val:12345, initV:initial value, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
+    └─
+    "
+  `)
 
   updateConfigAction.call([
     { fields: { password: { metadata: { foo: 'bar' } } } },
   ])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ---
-      ┌─
-      ⎢ isDiffFromInitial: true
-      ⎢ formIsValid: false
-      ⎢ password: {val:12345, initV:initial value, req:N, errors:[This field is required, Invalid], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, m:{foo:bar}, isL:N}
-      └─
-      "
-    `)
+    "
+    ---
+    ┌─
+    ⎢ isDiffFromInitial: true
+    ⎢ formIsValid: false
+    ⎢ password: {val:12345, initV:initial value, req:N, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, m:{foo:bar}, isL:N}
+    └─
+    "
+  `)
 })
 
 test('remove field', () => {
@@ -504,9 +504,9 @@ test('update form metadata', () => {
     "
     ┌─
     ⎢ isDiffFromInitial: false
-    ⎢ formIsValid: false
+    ⎢ formIsValid: true
     ⎢ metadata: invalid
-    ⎢ password: {val:, initV:, req:N, errors:[Invalid], isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     ┌─
     ⎢ isDiffFromInitial: false

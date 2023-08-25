@@ -39,7 +39,7 @@ describe('with getFieldInitialConfig', () => {
 
     expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
-      password: {value:, errors:[Password must have at least 8 characters], isValid:false}
+      password: {value:, errors:null, isValid:true}
       password: {value:12345678, errors:null, isValid:true}
       "
     `)
