@@ -66,12 +66,18 @@ export const invalidFormField: {
   warning: (msg: string | string[]) => ({ warning: msg }),
 }
 
-type FieldIsValid<T, M, F extends FieldsState<any>, FM, K> = (context: {
-  value: T
-  fieldMetadata: M
-  fields: F
-  formMetadata: FM
-  fieldId: K
+export type FieldIsValid<
+  Value,
+  Metadata,
+  FS extends FieldsState<any>,
+  FormMetadata,
+  FieldId,
+> = (context: {
+  value: Value
+  fieldMetadata: Metadata
+  fields: FS
+  formMetadata: FormMetadata
+  fieldId: FieldId
 }) =>
   | true
   | string
