@@ -17,7 +17,7 @@ export function setGlobalConfig(config: Partial<typeof globalConfig>) {
   Object.assign(globalConfig, config)
 }
 
-export type FieldInitialConfigValidation<V, M> = SingleOrMultiple<
+export type FieldInitialConfigValidation<V, M = unknown> = SingleOrMultiple<
   (args: {
     value: V
     fieldMetadata?: M
