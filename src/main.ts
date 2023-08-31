@@ -17,7 +17,7 @@ export function setGlobalConfig(config: Partial<typeof globalConfig>) {
   Object.assign(globalConfig, config)
 }
 
-export type FieldInitialConfigValidation<V, M = unknown> = SingleOrMultiple<
+export type FieldSimplifiedValidation<V, M = unknown> = SingleOrMultiple<
   (args: {
     value: V
     fieldMetadata?: M
@@ -37,7 +37,7 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
   requiredErrorMsg?: string | false
   advancedCustomValue?: T
   /** @internal */
-  _validation?: FieldInitialConfigValidation<any, any>
+  _validation?: FieldSimplifiedValidation<any, any>
 }
 
 type FieldDerivatedConfig<T, F extends FieldsState<any>, FM> = {
@@ -95,7 +95,7 @@ type FieldConfig = Omit<FieldInitialConfig, 'metadata' | '_validation'> & {
   _metadata?: any
   derived: FieldDerivatedConfig<unknown, any, any> | undefined
   validations: FieldValidation<unknown, unknown, any, any, any> | undefined
-  simpleValidations: FieldInitialConfigValidation<unknown, unknown> | undefined
+  simpleValidations: FieldSimplifiedValidation<unknown, unknown> | undefined
   arrayConfig:
     | ArrayFieldsConfig<
         Record<string, FieldInitialConfig<any[], unknown>>
@@ -171,7 +171,7 @@ export type UpdateFieldConfig<
     fields: FieldsState<T>
     formMetadata: FM
   }) => boolean
-  simpleFieldIsValid?: FieldInitialConfigValidation<
+  simpleFieldIsValid?: FieldSimplifiedValidation<
     T[K]['initialValue'],
     T[K]['metadata']
   >
@@ -1046,7 +1046,7 @@ export type GetFieldInitialConfig<V, M> = {
   required?: boolean
   requiredErrorMsg?: string | false
   metadata?: M
-  isValid?: FieldInitialConfigValidation<V, M>
+  isValid?: FieldSimplifiedValidation<V, M>
 }
 
 export function getFieldConfig<V, M = undefined>({
