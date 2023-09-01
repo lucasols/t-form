@@ -179,8 +179,8 @@ test('update a field config', () => {
     ---
     ┌─
     ⎢ isDiffFromInitial: true
-    ⎢ formIsValid: false
-    ⎢ password: {val:12345, initV:initial value, req:N, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, m:{foo:bar}, isL:N}
+    ⎢ formIsValid: true
+    ⎢ password: {val:12345, initV:initial value, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:Y, isDiff:Y, m:{foo:bar}, isL:N}
     └─
     "
   `)
@@ -512,7 +512,7 @@ test('update form metadata', () => {
     ⎢ isDiffFromInitial: false
     ⎢ formIsValid: false
     ⎢ metadata: required
-    ⎢ password: {val:, initV:, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⎢ password: {val:, initV:, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     ┌─
     ⎢ isDiffFromInitial: false

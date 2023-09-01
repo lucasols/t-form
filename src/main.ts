@@ -708,6 +708,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     forceFormUpdate,
     arrayFields,
     setTemporaryError,
+    /** @internal */
+    formConfig,
   }
 }
 

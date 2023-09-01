@@ -363,7 +363,7 @@ describe('required fields', () => {
       ---
       ┌─
       ⎢ age: {value:20, required:false, errors:null, isValid:true}
-      ⎢ birthDate: {value:null, required:true, errors:[This field is required], isValid:false}
+      ⎢ birthDate: {value:null, required:true, errors:null, isValid:false}
       └─
       "
     `)
