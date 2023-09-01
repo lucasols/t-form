@@ -861,23 +861,24 @@ function updateDerivedConfig(
         formMetadata: formState.formMetadata,
       })
 
-      if (newRequired !== fieldState.required) {
-        fieldState.required = newRequired
+      fieldState.required = newRequired
 
-        const validationResults = basicFieldValidation(
-          { ...fieldConfig, required: newRequired },
-          fieldState.value,
-        )
+      const validationResults = basicFieldValidation(
+        { ...fieldConfig, required: newRequired },
+        fieldState.value,
+      )
 
-        fieldState.errors = keepPrevIfUnchanged(
-          validationResults.errors,
-          fieldState.errors,
-        )
-        errorWasReseted?.add(id)
-
-        fieldState.isValid = validationResults.isValid
-        fieldState.isEmpty = validationResults.isEmpty
+      if (
+        !deepEqual(validationResults.errors, fieldState.errors) &&
+        fieldState.isTouched
+      ) {
+        fieldState.errors = validationResults.errors
       }
+
+      errorWasReseted?.add(id)
+
+      fieldState.isValid = validationResults.isValid
+      fieldState.isEmpty = validationResults.isEmpty
     }
   }
 }
