@@ -84,7 +84,7 @@ test('should not clean errors from derivated config', () => {
   `)
 })
 
-test('setValueIfChangeToDerivedRequired', () => {
+test('resetIfDerivedRequiredChangeToFalse', () => {
   const renders = createRenderStore()
 
   const setCompany = emulateAction<'pf' | 'pj' | null>()
