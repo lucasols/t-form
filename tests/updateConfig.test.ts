@@ -326,7 +326,7 @@ test('merge and removeExcess', () => {
       ⎢ name: {value:, initialValue:}
       └─
       ┌─
-      ⎢ isDiffFromInitial: false
+      ⎢ isDiffFromInitial: true
       ⎢ formIsValid: true
       ⎢ password: {value:, initialValue:12345}
       └─
@@ -519,6 +519,71 @@ test('update form metadata', () => {
     ⎢ formIsValid: true
     ⎢ metadata: null
     ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    "
+  `)
+})
+
+test('update initialValue should update isDiffFromInitial', () => {
+  const renders = createRenderStore()
+
+  const updateInitialValue = emulateAction()
+  const setPassword = emulateAction<string>()
+
+  renderHook(() => {
+    const { useFormState, updateConfig, handleChange } = useForm({
+      initialConfig: {
+        password: {
+          initialValue: '',
+        },
+      },
+    })
+
+    const { formFields, isDiffFromInitial, formIsValid } = useFormState({
+      mustBeDiffFromInitial: true,
+    })
+
+    renders.add({
+      isDiffFromInitial,
+      formIsValid,
+      ...simplifyFieldsState(formFields),
+    })
+
+    updateInitialValue.useOnAction(() => {
+      updateConfig({
+        fields: {
+          password: {
+            initialValue: '12345',
+          },
+        },
+      })
+    })
+
+    setPassword.useOnAction((password) => {
+      handleChange('password', password)
+    })
+  })
+
+  setPassword.call('12345')
+
+  updateInitialValue.call()
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⎢ isDiffFromInitial: false
+    ⎢ formIsValid: false
+    ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    ┌─
+    ⎢ isDiffFromInitial: true
+    ⎢ formIsValid: true
+    ⎢ password: {val:12345, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    └─
+    ┌─
+    ⎢ isDiffFromInitial: false
+    ⎢ formIsValid: false
+    ⎢ password: {val:12345, initV:12345, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:N, isL:N}
     └─
     "
   `)

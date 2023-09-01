@@ -725,7 +725,7 @@ function getInitialStateFromConfig<T extends FieldsInitialConfig>(
   [K in keyof T]: FieldState<T[K]['initialValue'], T[K]['metadata']>
 }[keyof T] {
   return {
-    value: config.initialValue,
+    value: config.advancedCustomValue ?? config.initialValue,
     initialValue: config.initialValue,
     required: config.required ?? false,
     errors: null,
@@ -787,6 +787,7 @@ function updateFieldStateFromValue(
   }
 
   if (
+    !isInitialState &&
     draftField.value === normalizedValue &&
     deepEqual(validationResults, {
       errors: draftField.errors,
@@ -797,11 +798,11 @@ function updateFieldStateFromValue(
     return
   }
 
-  draftField.value = normalizedValue
   draftField.isDiffFromInitial = !deepEqual(
     normalizedValue,
     draftField.initialValue,
   )
+  draftField.value = normalizedValue
   draftField.errors = draftField.isTouched
     ? keepPrevIfUnchanged(validationResults.errors, draftField.errors)
     : null
