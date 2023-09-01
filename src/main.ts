@@ -43,6 +43,7 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
 type FieldDerivatedConfig<T, F extends FieldsState<any>, FM> = {
   checkIfIsEmpty?: (value: T) => boolean
   required?: (context: { fields: F; formMetadata: FM }) => boolean
+  resetIfDerivedRequiredChangeToFalse?: { value: T }
 }
 
 export type SilentInvalid = { silentInvalid: true }
@@ -862,6 +863,13 @@ function updateDerivedConfig(
         fields: formState.fields,
         formMetadata: formState.formMetadata,
       })
+
+      if (fieldConfig.derived.resetIfDerivedRequiredChangeToFalse) {
+        if (newRequired !== fieldState.required && !newRequired) {
+          fieldState.value =
+            fieldConfig.derived.resetIfDerivedRequiredChangeToFalse.value
+        }
+      }
 
       fieldState.required = newRequired
 
