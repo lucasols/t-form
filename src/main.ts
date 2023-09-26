@@ -907,6 +907,7 @@ function performFormValidation(
 
       if (!errorWasReseted.has(id)) {
         fieldState.errors = null
+        fieldState.isValid = fieldState.required ? !fieldState.isEmpty : true
       }
     }
   }

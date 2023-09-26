@@ -797,3 +797,63 @@ test('do not show validation errors if field is empty', () => {
     "
   `)
 })
+
+test('reproduce bug with formIsValid not updating', () => {
+  const renders = createRenderStore()
+
+  const setShouldNotBeMoreThan5 = emulateAction<boolean>()
+
+  renderHook(() => {
+    const { useFormState, handleChange } = useForm({
+      initialConfig: {
+        items: { initialValue: 8 },
+        shouldNotBeMoreThan5: { initialValue: false },
+      },
+      fieldIsValid: {
+        items: ({ value, fields }) => {
+          if (fields.shouldNotBeMoreThan5.value && value > 5) {
+            return 'Should not be more than 5'
+          }
+
+          return true
+        },
+      },
+    })
+
+    const { formFields, formIsValid } = useFormState()
+
+    renders.add({
+      items: simplifyFieldState(formFields.items),
+      shouldNotBeMoreThan5: simplifyFieldState(formFields.shouldNotBeMoreThan5),
+      formIsValid,
+    })
+
+    setShouldNotBeMoreThan5.useOnAction((value) => {
+      handleChange('shouldNotBeMoreThan5', value)
+    })
+  })
+
+  setShouldNotBeMoreThan5.call(true)
+
+  setShouldNotBeMoreThan5.call(false)
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⎢ items: {val:8, initV:8, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⎢ shouldNotBeMoreThan5: {val:false, initV:false, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⎢ formIsValid: true
+    └─
+    ┌─
+    ⎢ items: {val:8, initV:8, req:N, errors:[Should not be more than 5], isValid:N, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⎢ shouldNotBeMoreThan5: {val:true, initV:false, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    ⎢ formIsValid: false
+    └─
+    ┌─
+    ⎢ items: {val:8, initV:8, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⎢ shouldNotBeMoreThan5: {val:false, initV:false, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:N, isL:N}
+    ⎢ formIsValid: true
+    └─
+    "
+  `)
+})
