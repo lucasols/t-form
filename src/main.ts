@@ -8,12 +8,17 @@ import { invariant, isObject } from './utils/assertions'
 import { SingleOrMultiple } from './utils/typing'
 import { singleOrMultipleToArray } from './utils/arrays'
 
-const globalConfig = {
+type GlobalConfig = {
+  defaultRequiredMsg: string | (() => string)
+  errorElementSelector: string
+}
+
+const globalConfig: GlobalConfig = {
   defaultRequiredMsg: 'This field is required',
   errorElementSelector: '.showErrors',
 }
 
-export function setGlobalConfig(config: Partial<typeof globalConfig>) {
+export function setGlobalConfig(config: Partial<GlobalConfig>) {
   Object.assign(globalConfig, config)
 }
 
@@ -834,7 +839,10 @@ function basicFieldValidation(
 
     if (fieldConfig.requiredErrorMsg !== false) {
       errors.push(
-        fieldConfig.requiredErrorMsg || globalConfig.defaultRequiredMsg,
+        fieldConfig.requiredErrorMsg ||
+          (typeof globalConfig.defaultRequiredMsg === 'string'
+            ? globalConfig.defaultRequiredMsg
+            : globalConfig.defaultRequiredMsg()),
       )
     }
   }
