@@ -56,20 +56,15 @@ export type InvalidValueIsLoading = { valueIsLoading: true }
 export type SilentInvalidIfNotTouched = {
   silentIfNotTouched: string | string[]
 }
-export type Warning = {
-  warning: string | string[]
-}
 
 export const invalidFormField: {
   silentInvalid: SilentInvalid
   valueIsLoading: InvalidValueIsLoading
   silentIfNotTouched: (msg: string | string[]) => SilentInvalidIfNotTouched
-  warning: (msg: string | string[]) => Warning
 } = {
   silentInvalid: { silentInvalid: true },
   valueIsLoading: { valueIsLoading: true },
   silentIfNotTouched: (msg: string | string[]) => ({ silentIfNotTouched: msg }),
-  warning: (msg: string | string[]) => ({ warning: msg }),
 }
 
 export type FieldIsValid<
@@ -91,7 +86,6 @@ export type FieldIsValid<
   | SilentInvalid
   | InvalidValueIsLoading
   | SilentInvalidIfNotTouched
-  | Warning
 
 type FieldValidation<T, M, F extends FieldsState<any>, FM, K> =
   | FieldIsValid<T, M, F, FM, K>
@@ -127,7 +121,6 @@ export type FieldState<V, M> = {
   required: boolean
   isValid: boolean
   errors: string[] | null
-  warnings: string[] | null
   isTouched: boolean
   isDiffFromInitial: boolean
   isEmpty: boolean
@@ -743,7 +736,6 @@ function getInitialStateFromConfig<T extends FieldsInitialConfig>(
     isDiffFromInitial: false,
     metadata: config._metadata,
     valueIsLoading: false,
-    warnings: null,
   }
 }
 
@@ -818,7 +810,6 @@ function updateFieldStateFromValue(
   draftField.isValid = validationResults.isValid
   draftField.isEmpty = validationResults.isEmpty
   draftField.valueIsLoading = false
-  draftField.warnings = null
 }
 
 function basicFieldValidation(
@@ -951,16 +942,6 @@ function performFormValidation(
       })
 
       if (result !== true) {
-        if (isObject(result) && 'warning' in result) {
-          if (!fieldState.warnings) {
-            fieldState.warnings = []
-          }
-
-          fieldState.warnings.push(...singleOrMultipleToArray(result.warning))
-
-          continue
-        }
-
         fieldState.isValid = false
 
         if (typeof result === 'string') {

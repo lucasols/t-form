@@ -162,3 +162,49 @@ test('resetIfDerivedRequiredChangeToFalse', () => {
     "
   `)
 })
+
+test('derivated config based on field own value', () => {
+  const renders = createRenderStore()
+
+  const setArrayOrNull = emulateAction<string[] | null>()
+
+  renderHook(() => {
+    const { useFormState, handleChange } = useForm({
+      initialConfig: {
+        arrayOrNull: {
+          initialValue: null as string[] | null,
+          required: true,
+        },
+      },
+      derivatedConfig: {
+        arrayOrNull: {
+          required({ fields }) {
+            return fields.arrayOrNull.value !== null
+          },
+        },
+      },
+    })
+
+    const { formFields } = useFormState()
+
+    renders.add(simplifyFieldsState(formFields))
+
+    setArrayOrNull.useOnAction((value) => {
+      handleChange('arrayOrNull', value)
+    })
+  })
+
+  setArrayOrNull.call([])
+  setArrayOrNull.call(['ok'])
+
+  setArrayOrNull.call(null)
+
+  expect(renders.snapshot).toMatchInlineSnapshot(`
+    "
+    arrayOrNull: {val:null, initV:null, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    arrayOrNull: {val:[], initV:null, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
+    arrayOrNull: {val:[ok], initV:null, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    arrayOrNull: {val:null, initV:null, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:Y, isDiff:N, isL:N}
+    "
+  `)
+})
