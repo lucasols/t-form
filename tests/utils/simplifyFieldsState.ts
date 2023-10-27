@@ -13,7 +13,6 @@ export function simplifyFieldState(fieldState: FieldState<any, any>) {
     isDiff: fieldState.isDiffFromInitial ? 'Y' : 'N',
     m: fieldState.metadata,
     isL: fieldState.valueIsLoading ? 'Y' : 'N',
-    warnings: fieldState.warnings ?? undefined,
   }
 }
 export function simplifyFieldsState(
