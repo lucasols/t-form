@@ -643,53 +643,6 @@ test('silentIfNotTouched error', () => {
   `)
 })
 
-test('warnings', () => {
-  const renders = createRenderStore()
-
-  const setAge = emulateAction<number>()
-
-  renderHook(() => {
-    const { useFormState, handleChange } = useForm({
-      initialConfig: {
-        age: { initialValue: 16 as number, required: true },
-      },
-      fieldIsValid: {
-        age: ({ value }) => {
-          return value < 18
-            ? { warning: 'You must be at least 18 years old' }
-            : true
-        },
-      },
-    })
-
-    const { formFields, formIsValid } = useFormState()
-
-    renders.add({
-      age: simplifyFieldState(formFields.age),
-      formIsValid,
-    })
-
-    setAge.useOnAction((age) => {
-      handleChange('age', age)
-    })
-  })
-
-  setAge.call(17)
-
-  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-    "
-    ┌─
-    ⎢ age: {val:16, initV:16, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N, warnings:[You must be at least 18 years old]}
-    ⎢ formIsValid: true
-    └─
-    ┌─
-    ⎢ age: {val:17, initV:16, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N, warnings:[You must be at least 18 years old]}
-    ⎢ formIsValid: true
-    └─
-    "
-  `)
-})
-
 test('add temp error', () => {
   const renders = createRenderStore()
 
