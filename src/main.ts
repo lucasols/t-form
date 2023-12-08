@@ -479,12 +479,12 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   const updateConfig = useCallback(
     ({
       fields,
-      fieldsUpdateMode = 'merge',
+      updateMode = 'merge',
       formMetadata,
     }: {
       fields?: UpdateFormConfig<T>
       formMetadata?: M
-      fieldsUpdateMode?: 'merge' | 'overwriteAll' | 'mergeAndRemoveExcessFields'
+      updateMode?: 'merge' | 'overwriteAll' | 'mergeAndRemoveExcessFields'
     }) => {
       formStore.batch(() => {
         if (fields) {
@@ -498,7 +498,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 newConfig !== 'remove' &&
                 (!fieldConfig ||
                   newConfig.replace ||
-                  fieldsUpdateMode === 'overwriteAll')
+                  updateMode === 'overwriteAll')
               ) {
                 if (!Object.hasOwn(newConfig, 'initialValue')) {
                   throw new Error(
@@ -595,8 +595,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
             }
 
             if (
-              fieldsUpdateMode === 'mergeAndRemoveExcessFields' ||
-              fieldsUpdateMode === 'overwriteAll'
+              updateMode === 'mergeAndRemoveExcessFields' ||
+              updateMode === 'overwriteAll'
             ) {
               for (const [id] of objectTypedEntries(draft.fields)) {
                 if (!fields[id]) {

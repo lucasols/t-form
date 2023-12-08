@@ -311,7 +311,7 @@ test('merge and removeExcess', () => {
     mergeAndRemoveExcess.useOnAction(() => {
       updateConfig({
         fields: { password: { initialValue: '12345' } },
-        fieldsUpdateMode: 'mergeAndRemoveExcessFields',
+        updateMode: 'mergeAndRemoveExcessFields',
       })
     })
   })
@@ -423,7 +423,7 @@ test('override all', () => {
           password: { initialValue: '12345' },
           newField: { initialValue: 'new field', required: true },
         },
-        fieldsUpdateMode: 'overrideAll',
+        updateMode: 'overwriteAll',
       })
     })
   })

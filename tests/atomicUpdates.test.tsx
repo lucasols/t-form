@@ -65,7 +65,7 @@ test('useDynamicForm', async () => {
     useOnChange(fieldsId, () => {
       updateConfig({
         fields: getInitialConfig(fieldsId),
-        fieldsUpdateMode: 'overwriteAll',
+        updateMode: 'overwriteAll',
       })
     })
 
