@@ -506,12 +506,6 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                   )
                 }
 
-                if (Object.hasOwn(newConfig, 'value')) {
-                  throw new Error(
-                    "Can't set value when replacing/adding fields",
-                  )
-                }
-
                 const config: FieldConfig = {
                   initialValue: newConfig.initialValue,
                   required: newConfig.required ?? false,
