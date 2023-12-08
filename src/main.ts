@@ -466,7 +466,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   )
 
   const setTemporaryError = useCallback(
-    (fields: { [P in FieldsId]?: string | string[] }) => {
+    (fields: { [P in keyof T]?: string | string[] }) => {
       for (const [id, error] of objectTypedEntries(fields)) {
         tempErrors.set(id, singleOrMultipleToArray(error))
       }
@@ -484,7 +484,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     }: {
       fields?: UpdateFormConfig<T>
       formMetadata?: M
-      fieldsUpdateMode?: 'merge' | 'overrideAll' | 'mergeAndRemoveExcessFields'
+      fieldsUpdateMode?: 'merge' | 'overwriteAll' | 'mergeAndRemoveExcessFields'
     }) => {
       formStore.batch(() => {
         if (fields) {
@@ -498,7 +498,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 newConfig !== 'remove' &&
                 (!fieldConfig ||
                   newConfig.replace ||
-                  fieldsUpdateMode === 'overrideAll')
+                  fieldsUpdateMode === 'overwriteAll')
               ) {
                 if (!Object.hasOwn(newConfig, 'initialValue')) {
                   throw new Error(
@@ -596,7 +596,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
             if (
               fieldsUpdateMode === 'mergeAndRemoveExcessFields' ||
-              fieldsUpdateMode === 'overrideAll'
+              fieldsUpdateMode === 'overwriteAll'
             ) {
               for (const [id] of objectTypedEntries(draft.fields)) {
                 if (!fields[id]) {
@@ -1010,10 +1010,6 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
     for (const [id, fieldConfig] of objectTypedEntries(initialConfig)) {
       if (!Object.hasOwn(fieldConfig, 'initialValue')) {
         throw new Error(`Missing "initialValue" for field "${String(id)}"`)
-      }
-
-      if (Object.hasOwn(fieldConfig, 'value')) {
-        throw new Error("Can't set value in useDynamicForm initialConfig")
       }
 
       config[id] = {
