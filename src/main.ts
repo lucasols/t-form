@@ -1024,7 +1024,7 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
         globalConfig.handleFormError(
           new Error(`Missing "initialValue" for field "${String(id)}"`),
         )
-        return
+        continue
       }
 
       config[id] = {
