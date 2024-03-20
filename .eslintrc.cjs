@@ -89,14 +89,6 @@ const config = {
       ERROR_IN_CI,
       { ignoreOnInitialization: true, allow: ['expect'] },
     ],
-    '@typescript-eslint/ban-types': [
-      ERROR_IN_CI,
-      {
-        types: {
-          Error: 'Dont use error type',
-        },
-      },
-    ],
 
     '@typescript-eslint/no-non-null-assertion': OFF,
     '@typescript-eslint/no-empty-function': OFF,
