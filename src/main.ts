@@ -513,9 +513,12 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                   updateMode === 'overwriteAll')
               ) {
                 if (!Object.hasOwn(newConfig, 'initialValue')) {
-                  throw new Error(
-                    `Missing "initialValue" for field "${String(id)}"`,
+                  globalConfig.handleFormError(
+                    new Error(
+                      `Missing "initialValue" for field "${String(id)}"`,
+                    ),
                   )
+                  return
                 }
 
                 const config: FieldConfig = {
@@ -1018,7 +1021,10 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
 
     for (const [id, fieldConfig] of objectTypedEntries(initialConfig)) {
       if (!Object.hasOwn(fieldConfig, 'initialValue')) {
-        throw new Error(`Missing "initialValue" for field "${String(id)}"`)
+        globalConfig.handleFormError(
+          new Error(`Missing "initialValue" for field "${String(id)}"`),
+        )
+        return
       }
 
       config[id] = {
