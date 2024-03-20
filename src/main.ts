@@ -11,11 +11,15 @@ import { singleOrMultipleToArray } from './utils/arrays'
 type GlobalConfig = {
   defaultRequiredMsg: string | (() => string)
   errorElementSelector: string
+  handleFormError: (error: Error) => void
 }
 
 const globalConfig: GlobalConfig = {
   defaultRequiredMsg: 'This field is required',
   errorElementSelector: '.showErrors',
+  handleFormError(error) {
+    throw error
+  },
 }
 
 export function setGlobalConfig(config: Partial<GlobalConfig>) {
@@ -364,7 +368,15 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
   type ValueArg<K extends FieldsId> = SetValue<T[K]['initialValue']>
 
-  const handleChange = useCallback(
+  type HandleChange = {
+    <K extends FieldsId>(id: K, value: ValueArg<K>, skipTouch?: boolean): void
+    <K extends FieldsId>(
+      fields: { [P in K]?: ValueArg<P> },
+      skipTouch?: boolean,
+    ): void
+  }
+
+  const handleChange = useCallback<HandleChange>(
     <K extends FieldsId>(
       ...args:
         | [id: K, value: ValueArg<K>, skipTouch?: boolean]
@@ -849,7 +861,10 @@ function updateDerivedConfig(
       const fieldState = formState.fields[id]
 
       if (!fieldState) {
-        throw new Error(`Field with id "${String(id)}" not found`)
+        globalConfig.handleFormError(
+          new Error(`Field with id "${String(id)}" not found`),
+        )
+        return
       }
 
       const newRequired = fieldConfig.derived.required({
