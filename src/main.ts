@@ -1,12 +1,12 @@
 import { useCallback, useMemo } from 'react'
-import { deepEqual, useCreateStore, Store } from 't-state'
+import { Store, deepEqual, useCreateStore } from 't-state'
+import { singleOrMultipleToArray } from './utils/arrays'
+import { invariant, isObject } from './utils/assertions'
 import { useConst, useLatestValue } from './utils/hooks'
 import { mapObjectToObject, objectTypedEntries } from './utils/object'
+import { SingleOrMultiple } from './utils/typing'
 import { SetValue, unwrapSetterValue } from './utils/unwrapSetterValue'
 import { keepPrevIfUnchanged, unwrapGetterOrValue } from './utils/utils'
-import { invariant, isObject } from './utils/assertions'
-import { SingleOrMultiple } from './utils/typing'
-import { singleOrMultipleToArray } from './utils/arrays'
 
 type GlobalConfig = {
   defaultRequiredMsg: string | (() => string)
@@ -370,23 +370,20 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
   type HandleChange = {
     <K extends FieldsId>(id: K, value: ValueArg<K>, skipTouch?: boolean): void
-    <K extends FieldsId>(
-      fields: { [P in K]?: ValueArg<P> },
-      skipTouch?: boolean,
-    ): void
+    (fields: { [P in FieldsId]?: ValueArg<P> }, skipTouch?: boolean): void
   }
 
   const handleChange = useCallback<HandleChange>(
     <K extends FieldsId>(
       ...args:
         | [id: K, value: ValueArg<K>, skipTouch?: boolean]
-        | [fields: { [P in K]?: ValueArg<P> }, skipTouch?: boolean]
+        | [fields: { [P in FieldsId]?: ValueArg<P> }, skipTouch?: boolean]
     ) => {
       const firstArg = args[0]
       const skipTouch =
         typeof args[0] === 'string' ? args[2] : (args[1] as boolean | undefined)
 
-      const errorWasReseted = new Set<string>()
+      const errorWasReset = new Set<string>()
 
       const valuesToUpdate: Partial<Record<K, ValueArg<K>>> =
         typeof firstArg !== 'object'
@@ -412,7 +409,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
           updateFieldStateFromValue(
             id as string,
-            errorWasReseted,
+            errorWasReset,
             fieldConfig,
             newValue,
             fieldState,
@@ -421,12 +418,12 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
         }
 
         updateDerivedConfig(
-          errorWasReseted,
+          errorWasReset,
           formConfig.fieldsMap as Map<string, FieldConfig>,
           draft,
         )
 
-        performExtraUpdates(draft, errorWasReseted)
+        performExtraUpdates(draft, errorWasReset)
       })
     },
     [formStore, formConfig, performExtraUpdates, tempErrors],
