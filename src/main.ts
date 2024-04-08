@@ -136,11 +136,7 @@ type FieldsState<T extends FieldsInitialConfig> = {
 }
 
 type FieldsDerivedConfig<T extends FieldsInitialConfig, FM> = {
-  [K in keyof T]?: FieldDerivedConfig<
-    T[K]['initialValue'],
-    FieldsState<T>,
-    FM
-  >
+  [K in keyof T]?: FieldDerivedConfig<T[K]['initialValue'], FieldsState<T>, FM>
 }
 
 type FieldsValidation<T extends FieldsInitialConfig, FM> = {
@@ -370,7 +366,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
   type HandleChange = {
     <K extends FieldsId>(id: K, value: ValueArg<K>, skipTouch?: boolean): void
-    (fields: { [P in FieldsId]?: ValueArg<P> }, skipTouch?: boolean): void
+    (fields: { [P in keyof T]?: ValueArg<P> }, skipTouch?: boolean): void
   }
 
   const handleChange = useCallback<HandleChange>(

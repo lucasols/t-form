@@ -15,7 +15,7 @@ Using the `useForm` hook, you can create a strong typed form.
 ```tsx
 import { useForm } from 't-state-form'
 
-const LoginComponet = () => {
+const LoginComponent = () => {
   const { useFormState, handleChange, forceValidation } = useForm({
     initialConfig: {
       email: {

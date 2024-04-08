@@ -20,13 +20,12 @@
   "repository": "github:lucasols/t-form",
   "author": "Lucas Santos",
   "type": "module",
-  "main": "./dist/main.cjs",
   "module": "./dist/main.js",
   "types": "./dist/main.d.ts",
   "exports": {
     ".": {
       "import": "./dist/main.js",
-      "require": "./dist/main.cjs"
+      "types": "./dist/main.d.ts"
     }
   },
   "sideEffects": false,
@@ -53,8 +52,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tsm": "^2.3.0",
-    "tsup": "^7.2.0",
-    "typescript": "^5.2.2",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.4",
     "vite": "^4.4.9",
     "vitest": "^0.34.5"
   },
