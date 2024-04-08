@@ -49,7 +49,7 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
   _validation?: FieldSimplifiedValidation<any, any>
 }
 
-type FieldDerivatedConfig<T, F extends FieldsState<any>, FM> = {
+type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
   checkIfIsEmpty?: (value: T) => boolean
   required?: (context: { fields: F; formMetadata: FM }) => boolean
   resetIfDerivedRequiredChangeToFalse?: { value: T }
@@ -97,7 +97,7 @@ type FieldValidation<T, M, F extends FieldsState<any>, FM, K> =
 
 type FieldConfig = Omit<FieldInitialConfig, 'metadata' | '_validation'> & {
   _metadata?: any
-  derived: FieldDerivatedConfig<unknown, any, any> | undefined
+  derived: FieldDerivedConfig<unknown, any, any> | undefined
   validations: FieldValidation<unknown, unknown, any, any, any> | undefined
   simpleValidations: FieldSimplifiedValidation<unknown, unknown> | undefined
   arrayConfig:
@@ -135,8 +135,8 @@ type FieldsState<T extends FieldsInitialConfig> = {
   [P in keyof T]: FieldState<T[P]['initialValue'], T[P]['metadata']>
 }
 
-type FieldsDerivatedConfig<T extends FieldsInitialConfig, FM> = {
-  [K in keyof T]?: FieldDerivatedConfig<
+type FieldsDerivedConfig<T extends FieldsInitialConfig, FM> = {
+  [K in keyof T]?: FieldDerivedConfig<
     T[K]['initialValue'],
     FieldsState<T>,
     FM
@@ -211,7 +211,7 @@ type ArrayFieldsConfig<T extends FieldsInitialConfig> = {
 
 export function useForm<T extends FieldsInitialConfig, M = undefined>({
   initialConfig: fieldsInitialConfig,
-  derivatedConfig: fieldsDerivatedConfig,
+  derivatedConfig: fieldsDerivedConfig,
   fieldIsValid: validations,
   advancedFormValidation,
   arrayFieldsConfig,
@@ -219,8 +219,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 }: {
   initialConfig: T | (() => T)
   derivatedConfig?:
-    | FieldsDerivatedConfig<T, M>
-    | (() => FieldsDerivatedConfig<T, M>)
+    | FieldsDerivedConfig<T, M>
+    | (() => FieldsDerivedConfig<T, M>)
   fieldIsValid?: FieldsValidation<T, M> | (() => FieldsValidation<T, M>)
   advancedFormValidation?: AdvancedFormValidation<T>
   arrayFieldsConfig?: ArrayFieldsConfig<T> | (() => ArrayFieldsConfig<T>)
@@ -230,7 +230,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
   const formConfig = useConst(() => {
     const configs = unwrapGetterOrValue(fieldsInitialConfig)
-    const derivatedConfig = unwrapGetterOrValue(fieldsDerivatedConfig)
+    const derivedConfig = unwrapGetterOrValue(fieldsDerivedConfig)
     const fieldValidations = unwrapGetterOrValue(validations)
     const arraysConfig = unwrapGetterOrValue(arrayFieldsConfig)
 
@@ -240,7 +240,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       mapConfig.set(id, {
         ...initialConfig,
         _metadata: initialConfig.metadata,
-        derived: derivatedConfig?.[id],
+        derived: derivedConfig?.[id],
         validations: fieldValidations?.[id],
         arrayConfig: arraysConfig?.[id],
         simpleValidations: initialConfig._validation,
@@ -305,16 +305,16 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   const performExtraUpdates = useCallback(
     (
       formStoreState: InternalFormStoreState,
-      errorWasReseted: Set<string> | null,
+      errorWasReset: Set<string> | null,
     ) => {
       updateDerivedConfig(
-        errorWasReseted,
+        errorWasReset,
         formConfig.fieldsMap as Map<string, FieldConfig>,
         formStoreState,
       )
 
       performFormValidation(
-        errorWasReseted,
+        errorWasReset,
         formConfig.fieldsMap as Map<string, FieldConfig>,
         formStoreState,
         tempErrors,
@@ -778,7 +778,7 @@ export function getGenericFormState<T extends FieldsInitialConfig>(
 
 function updateFieldStateFromValue(
   fieldId: string,
-  errorWasReseted: Set<string> | null,
+  errorWasReset: Set<string> | null,
   fieldConfig: FieldConfig,
   newValue: unknown,
   draftField: FieldState<unknown, unknown>,
@@ -812,7 +812,7 @@ function updateFieldStateFromValue(
   draftField.errors = draftField.isTouched
     ? keepPrevIfUnchanged(validationResults.errors, draftField.errors)
     : null
-  errorWasReseted?.add(fieldId)
+  errorWasReset?.add(fieldId)
   draftField.isValid = validationResults.isValid
   draftField.isEmpty = validationResults.isEmpty
   draftField.valueIsLoading = false
@@ -852,7 +852,7 @@ function basicFieldValidation(
 }
 
 function updateDerivedConfig(
-  errorWasReseted: Set<string> | null,
+  errorWasReset: Set<string> | null,
   fieldsConfig: Map<string, FieldConfig>,
   formState: FormStoreState<any>,
 ): void {
@@ -893,7 +893,7 @@ function updateDerivedConfig(
         fieldState.errors = validationResults.errors
       }
 
-      errorWasReseted?.add(id)
+      errorWasReset?.add(id)
 
       fieldState.isValid = validationResults.isValid
       fieldState.isEmpty = validationResults.isEmpty
@@ -902,18 +902,18 @@ function updateDerivedConfig(
 }
 
 function performFormValidation(
-  errorWasReseted: Set<string> | null,
+  errorWasReset: Set<string> | null,
   fieldsConfig: Map<string, FieldConfig>,
   formState: FormStoreState<any>,
   tempErrors: Map<string, string[]>,
 ): void {
-  if (errorWasReseted) {
+  if (errorWasReset) {
     for (const [id] of fieldsConfig) {
       const fieldState = formState.fields[id]
 
       invariant(fieldState, fieldNotFoundMessage(id))
 
-      if (!errorWasReseted.has(id)) {
+      if (!errorWasReset.has(id)) {
         fieldState.errors = null
         fieldState.isValid = fieldState.required ? !fieldState.isEmpty : true
       }
@@ -1007,7 +1007,7 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
     const initialConfig = getInitialConfig()
 
     const config: DynamicFormInitialConfig<V, M> = {}
-    const derivatedConfig: FieldsDerivatedConfig<
+    const derivedConfig: FieldsDerivedConfig<
       DynamicFormInitialConfig<V, M>,
       FM
     > = {}
@@ -1031,7 +1031,7 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
         metadata: fieldConfig.metadata,
       }
 
-      derivatedConfig[id] = {
+      derivedConfig[id] = {
         checkIfIsEmpty: fieldConfig.checkIfIsEmpty,
         required: fieldConfig.derivedRequired,
       }
@@ -1041,7 +1041,7 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
 
     return {
       initialConfig: config,
-      derivatedConfig,
+      derivatedConfig: derivedConfig,
       fieldIsValid,
       advancedFormValidation,
       formMetadata: initialConfig.formMetadata,
