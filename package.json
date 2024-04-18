@@ -43,7 +43,7 @@
     "@typescript-eslint/eslint-plugin": "^7.7.0",
     "@typescript-eslint/parser": "^7.7.0",
     "@vitest/ui": "^1.5.0",
-    "eslint": "^9.0.0",
+    "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-vitest": "^0.5.3",
     "evtmitter": "^0.3.3",
