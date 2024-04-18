@@ -477,22 +477,25 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     [formStore, handleChange],
   )
 
-  const forceFormValidation = useCallback(() => {
-    formStore.batch(() => {
-      formStore.setKey('validationWasForced', (v) => v + 1)
+  const forceFormValidation = useCallback(
+    (options?: HandleChangeOptions) => {
+      formStore.batch(() => {
+        formStore.setKey('validationWasForced', (v) => v + 1)
 
-      forceFormUpdate(false)
-    })
+        forceFormUpdate(options ?? false)
+      })
 
-    setTimeout(() => {
-      document
-        .querySelector(globalConfig.errorElementSelector)
-        ?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        })
-    }, 90)
-  }, [formStore, forceFormUpdate])
+      setTimeout(() => {
+        document
+          .querySelector(globalConfig.errorElementSelector)
+          ?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          })
+      }, 90)
+    },
+    [formStore, forceFormUpdate],
+  )
 
   const touchField = useCallback(
     (id: FieldsId) => {
@@ -1112,14 +1115,14 @@ export function normalizeFormValue(value: unknown) {
   return typeof value === 'string'
     ? value.trim()
     : Array.isArray(value)
-    ? value.filter((item) => item !== undefined && item !== null)
-    : value
+      ? value.filter((item) => item !== undefined && item !== null)
+      : value
 }
 
 export function valueIsEmpty(value: unknown) {
   return Array.isArray(value)
     ? value.length === 0
     : typeof value === 'string'
-    ? value.trim() === ''
-    : value === undefined || value === null
+      ? value.trim() === ''
+      : value === undefined || value === null
 }
