@@ -364,20 +364,39 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
   type ValueArg<K extends FieldsId> = SetValue<T[K]['initialValue']>
 
+  type HandleChangeOptions = {
+    skipTouch?: boolean | string[]
+    touchOnly?: string[]
+  }
+
   type HandleChange = {
-    <K extends FieldsId>(id: K, value: ValueArg<K>, skipTouch?: boolean): void
-    (fields: { [P in keyof T]?: ValueArg<P> }, skipTouch?: boolean): void
+    <K extends FieldsId>(
+      id: K,
+      value: ValueArg<K>,
+      options?: HandleChangeOptions | boolean,
+    ): void
+    (
+      fields: { [P in keyof T]?: ValueArg<P> },
+      options?: HandleChangeOptions | boolean,
+    ): void
   }
 
   const handleChange = useCallback<HandleChange>(
     <K extends FieldsId>(
       ...args:
-        | [id: K, value: ValueArg<K>, skipTouch?: boolean]
-        | [fields: { [P in FieldsId]?: ValueArg<P> }, skipTouch?: boolean]
+        | [id: K, value: ValueArg<K>, skipTouch?: HandleChangeOptions | boolean]
+        | [
+            fields: { [P in FieldsId]?: ValueArg<P> },
+            skipTouch?: HandleChangeOptions | boolean,
+          ]
     ) => {
       const firstArg = args[0]
-      const skipTouch =
-        typeof args[0] === 'string' ? args[2] : (args[1] as boolean | undefined)
+      let options =
+        typeof args[0] === 'string'
+          ? args[2]
+          : (args[1] as boolean | HandleChangeOptions | undefined)
+
+      options = typeof options === 'boolean' ? { skipTouch: options } : options
 
       const errorWasReset = new Set<string>()
 
@@ -388,7 +407,23 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
       formStore.produceState((draft) => {
         for (const [id, value] of objectTypedEntries(valuesToUpdate)) {
-          if (!skipTouch) {
+          const skipTouchConfig = options && options.skipTouch
+
+          let shouldSkipTouch = false
+
+          if (skipTouchConfig) {
+            if (Array.isArray(skipTouchConfig)) {
+              shouldSkipTouch = skipTouchConfig.includes(id)
+            } else {
+              shouldSkipTouch = true
+            }
+          }
+
+          if (options && options.touchOnly) {
+            shouldSkipTouch = !options.touchOnly.includes(id)
+          }
+
+          if (!shouldSkipTouch) {
             tempErrors.delete(id as string)
           }
 
@@ -409,7 +444,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
             fieldConfig,
             newValue,
             fieldState,
-            !!skipTouch,
+            shouldSkipTouch,
           )
         }
 
@@ -426,14 +461,16 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   )
 
   const forceFormUpdate = useCallback(
-    (skipTouch: boolean) => {
+    (skipTouchOrOptions: boolean | string[] | HandleChangeOptions) => {
       formStore.batch(() => {
         handleChange(
           mapObjectToObject(formStore.state.fields, (id, { value }) => [
             id,
             value,
           ]),
-          skipTouch,
+          isObject(skipTouchOrOptions)
+            ? skipTouchOrOptions
+            : { skipTouch: skipTouchOrOptions },
         )
       })
     },
