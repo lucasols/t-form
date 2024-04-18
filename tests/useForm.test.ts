@@ -577,3 +577,109 @@ test('isDiffFromInitial', () => {
     "
   `)
 })
+
+describe('handle change with skip touch', () => {
+  test('set value and skip touch', () => {
+    const renders = createRenderStore()
+
+    const setName = emulateAction<string>()
+
+    renderHook(() => {
+      const { useFormState, handleChange } = useForm({
+        initialConfig: {
+          name: { initialValue: 'John' },
+        },
+      })
+
+      const { formFields } = useFormState()
+
+      renders.add(simplifyFieldsState(formFields, ['value', 'isTouched']))
+
+      setName.useOnAction((name) => {
+        handleChange('name', name, { skipTouch: true })
+      })
+    })
+
+    setName.call('Jack')
+
+    setName.call('John')
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      name: {value:John, isTouched:false}
+      name: {value:Jack, isTouched:false}
+      name: {value:John, isTouched:false}
+      "
+    `)
+  })
+
+  test('set value and skip touch of one field only', () => {
+    const renders = createRenderStore()
+
+    const setValues = emulateAction<{
+      name: string
+      age: number
+    }>()
+
+    renderHook(() => {
+      const { useFormState, handleChange } = useForm({
+        initialConfig: {
+          name: { initialValue: 'John' },
+          age: { initialValue: 10 },
+        },
+      })
+
+      const { formFields } = useFormState()
+
+      renders.add(simplifyFieldsState(formFields, ['value', 'isTouched']))
+
+      setValues.useOnAction((values) => {
+        handleChange(values, { skipTouch: ['age'] })
+      })
+    })
+
+    setValues.call({ name: 'Jack', age: 20 })
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      name: {value:John, isTouched:false} -- age: {value:10, isTouched:false}
+      name: {value:Jack, isTouched:true} -- age: {value:20, isTouched:false}
+      "
+    `)
+  })
+
+  test('set value and touch only one field', () => {
+    const renders = createRenderStore()
+
+    const setValues = emulateAction<{
+      name: string
+      age: number
+    }>()
+
+    renderHook(() => {
+      const { useFormState, handleChange } = useForm({
+        initialConfig: {
+          name: { initialValue: 'John' },
+          age: { initialValue: 10 },
+        },
+      })
+
+      const { formFields } = useFormState()
+
+      renders.add(simplifyFieldsState(formFields, ['value', 'isTouched']))
+
+      setValues.useOnAction((values) => {
+        handleChange(values, { touchOnly: ['age'] })
+      })
+    })
+
+    setValues.call({ name: 'Jack', age: 20 })
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      name: {value:John, isTouched:false} -- age: {value:10, isTouched:false}
+      name: {value:Jack, isTouched:false} -- age: {value:20, isTouched:true}
+      "
+    `)
+  })
+})
