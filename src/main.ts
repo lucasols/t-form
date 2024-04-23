@@ -837,6 +837,7 @@ function updateFieldStateFromValue(
       isEmpty: draftField.isEmpty,
     })
   ) {
+    errorWasReset?.add(fieldId)
     return
   }
 

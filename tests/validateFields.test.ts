@@ -810,3 +810,56 @@ test('reproduce bug with formIsValid not updating', () => {
     "
   `)
 })
+
+test('reproduce bug: forceFormValidation when called second time hides errors', () => {
+  const renders = createRenderStore()
+
+  const forceValidation = emulateAction()
+
+  renderHook(() => {
+    const { useFormState, forceFormValidation } = useForm({
+      initialConfig: {
+        name: { initialValue: '', required: true },
+      },
+    })
+
+    const { formFields, formIsValid } = useFormState()
+
+    renders.add({
+      formIsValid,
+      name: {
+        errors: formFields.name.errors,
+        isTouched: formFields.name.isTouched,
+        isValid: formFields.name.isValid,
+      },
+    })
+
+    forceValidation.useOnAction(() => {
+      forceFormValidation()
+    })
+  })
+
+  forceValidation.call()
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    formIsValid: false -- name: {errors:null, isTouched:false, isValid:false}
+    ┌─
+    ⎢ formIsValid: false
+    ⎢ name: {errors:[This field is required], isTouched:true, isValid:false}
+    └─
+    "
+  `)
+
+  forceValidation.call()
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ---
+    ┌─
+    ⎢ formIsValid: false
+    ⎢ name: {errors:[This field is required], isTouched:true, isValid:false}
+    └─
+    "
+  `)
+})
