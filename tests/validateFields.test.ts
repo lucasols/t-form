@@ -863,3 +863,66 @@ test('reproduce bug: forceFormValidation when called second time hides errors', 
     "
   `)
 })
+
+test('error is hidden when other field is changed', () => {
+  const renders = createRenderStore()
+
+  const setName = emulateAction<string>()
+  const setAge = emulateAction<number>()
+  const forceValidation = emulateAction()
+
+  renderHook(() => {
+    const { useFormState, handleChange, forceFormValidation } = useForm({
+      initialConfig: {
+        name: { initialValue: '', required: true },
+        age: { initialValue: 0 },
+      },
+    })
+
+    const { formFields } = useFormState()
+
+    renders.add({
+      name: simplifyFieldState(formFields.name),
+      age: simplifyFieldState(formFields.age),
+    })
+
+    setName.useOnAction((name) => {
+      handleChange('name', name)
+    })
+
+    setAge.useOnAction((age) => {
+      handleChange('age', age)
+    })
+
+    forceValidation.useOnAction(() => {
+      forceFormValidation()
+    })
+  })
+
+  forceValidation.call()
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⎢ name: {val:, initV:, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⎢ age: {val:0, initV:0, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    └─
+    ┌─
+    ⎢ name: {val:, initV:, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:N, isL:N}
+    ⎢ age: {val:0, initV:0, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:N, isL:N}
+    └─
+    "
+  `)
+
+  setAge.call(20)
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ---
+    ┌─
+    ⎢ name: {val:, initV:, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:N, isL:N}
+    ⎢ age: {val:20, initV:0, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    └─
+    "
+  `)
+})

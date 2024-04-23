@@ -406,6 +406,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
           : firstArg
 
       formStore.produceState((draft) => {
+        const unchangedFields = new Set<string>(Object.keys(draft.fields))
+
         for (const [id, value] of objectTypedEntries(valuesToUpdate)) {
           const skipTouchConfig = options && options.skipTouch
 
@@ -446,6 +448,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
             fieldState,
             shouldSkipTouch,
           )
+
+          unchangedFields.delete(id)
         }
 
         updateDerivedConfig(
@@ -945,13 +949,18 @@ function performFormValidation(
   tempErrors: Map<string, string[]>,
 ): void {
   if (errorWasReset) {
-    for (const [id] of fieldsConfig) {
+    for (const [id, fieldConfig] of fieldsConfig) {
       const fieldState = formState.fields[id]
 
       invariant(fieldState, fieldNotFoundMessage(id))
 
       if (!errorWasReset.has(id)) {
-        fieldState.errors = null
+        fieldState.errors = fieldState.errors
+          ? keepPrevIfUnchanged(
+              basicFieldValidation(fieldConfig, fieldState.value).errors,
+              fieldState.errors,
+            )
+          : null
         fieldState.isValid = fieldState.required ? !fieldState.isEmpty : true
       }
     }
