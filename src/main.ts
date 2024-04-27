@@ -442,7 +442,10 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
             fieldNotFoundMessage(id),
           )
 
-          const newValue = unwrapSetterValue(value, fieldState.value)
+          const newValue = unwrapSetterValue<typeof fieldState.value>(
+            value,
+            fieldState.value,
+          )
 
           updateFieldStateFromValue(
             id as string,
