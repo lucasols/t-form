@@ -409,6 +409,10 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
         const unchangedFields = new Set<string>(Object.keys(draft.fields))
 
         for (const [id, value] of objectTypedEntries(valuesToUpdate)) {
+          if (value === undefined) {
+            continue
+          }
+
           const skipTouchConfig = options && options.skipTouch
 
           let shouldSkipTouch = false
