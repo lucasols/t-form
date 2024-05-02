@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
-import { useForm } from '../src/main'
+import { getFieldConfig, useForm } from '../src/main'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
 import {
@@ -923,6 +923,43 @@ test('error is hidden when other field is changed', () => {
     ⎢ name: {val:, initV:, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:N, isL:N}
     ⎢ age: {val:20, initV:0, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
     └─
+    "
+  `)
+})
+
+test('use isEmtpy from getFieldConfig', () => {
+  const renders = createRenderStore()
+
+  const setName = emulateAction<string>()
+
+  renderHook(() => {
+    const { useFormState, handleChange } = useForm({
+      initialConfig: {
+        name: getFieldConfig<{ value: string } | null>({
+          initialValue: null,
+          checkIfIsEmpty: (value) => !value?.value,
+        }),
+      },
+    })
+
+    const { formFields } = useFormState()
+
+    renders.add(simplifyFieldsState(formFields, ['value', 'isEmpty']))
+
+    setName.useOnAction((name) => {
+      handleChange('name', { value: name })
+    })
+  })
+
+  setName.call('John')
+
+  setName.call('')
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    name: {value:null, isEmpty:true}
+    name: {value:{value:John}, isEmpty:false}
+    name: {value:{value:}, isEmpty:true}
     "
   `)
 })

@@ -80,11 +80,11 @@ export function useOnChange<T>(
 }
 
 export function useConst<T>(getValue: () => T) {
-  const store = useRef<T>()
+  const store = useRef<[T]>()
 
   if (store.current === undefined) {
-    store.current = getValue()
+    store.current = [getValue()]
   }
 
-  return store.current
+  return store.current[0]
 }

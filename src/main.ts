@@ -47,6 +47,8 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
   advancedCustomValue?: T
   /** @internal */
   _validation?: FieldSimplifiedValidation<any, any>
+  /** @internal */
+  _isEmpty?: (value: any) => boolean
 }
 
 type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
@@ -95,7 +97,10 @@ type FieldValidation<T, M, F extends FieldsState<any>, FM, K> =
   | FieldIsValid<T, M, F, FM, K>
   | FieldIsValid<T, M, F, FM, K>[]
 
-type FieldConfig = Omit<FieldInitialConfig, 'metadata' | '_validation'> & {
+type FieldConfig = Omit<
+  FieldInitialConfig,
+  'metadata' | '_validation' | '_isEmpty'
+> & {
   _metadata?: any
   derived: FieldDerivedConfig<unknown, any, any> | undefined
   validations: FieldValidation<unknown, unknown, any, any, any> | undefined
@@ -233,10 +238,16 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     const mapConfig = new Map<FieldsId, FieldConfig>()
 
     for (const [id, initialConfig] of objectTypedEntries(configs)) {
+      const fieldDerivedCfg = derivedConfig?.[id]
+
       mapConfig.set(id, {
         ...initialConfig,
         _metadata: initialConfig.metadata,
-        derived: derivedConfig?.[id],
+        derived: {
+          ...fieldDerivedCfg,
+          checkIfIsEmpty:
+            initialConfig._isEmpty ?? fieldDerivedCfg?.checkIfIsEmpty,
+        },
         validations: fieldValidations?.[id],
         arrayConfig: arraysConfig?.[id],
         simpleValidations: initialConfig._validation,
@@ -1110,6 +1121,7 @@ export type GetFieldInitialConfig<V, M> = {
   requiredErrorMsg?: string | false
   metadata?: M
   isValid?: FieldSimplifiedValidation<V, M>
+  checkIfIsEmpty?: (value: V) => boolean
 }
 
 export function getFieldConfig<V, M = undefined>({
@@ -1118,6 +1130,7 @@ export function getFieldConfig<V, M = undefined>({
   requiredErrorMsg,
   metadata,
   isValid,
+  checkIfIsEmpty,
 }: GetFieldInitialConfig<V, M>): FieldInitialConfig<V, M> {
   return {
     initialValue,
@@ -1125,6 +1138,7 @@ export function getFieldConfig<V, M = undefined>({
     requiredErrorMsg,
     metadata,
     _validation: isValid,
+    _isEmpty: checkIfIsEmpty,
   }
 }
 
