@@ -419,7 +419,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       formStore.produceState((draft) => {
         const unchangedFields = new Set<string>(Object.keys(draft.fields))
 
-        for (const [id, value] of objectTypedEntries(valuesToUpdate)) {
+        for (const [id, value] of Object.entries(valuesToUpdate)) {
           if (value === undefined) {
             continue
           }
@@ -441,17 +441,16 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
           }
 
           if (!shouldSkipTouch) {
-            tempErrors.delete(id as string)
+            tempErrors.delete(id)
           }
 
           const fieldState = draft.fields[id]
           const fieldConfig = formConfig.fieldsMap.get(id)
 
-          invariant(
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            fieldState && fieldConfig,
-            fieldNotFoundMessage(id),
-          )
+          if (!fieldState || !fieldConfig) {
+            console.error(fieldNotFoundMessage(id))
+            continue
+          }
 
           const newValue = unwrapSetterValue<typeof fieldState.value>(
             value,
@@ -459,7 +458,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
           )
 
           updateFieldStateFromValue(
-            id as string,
+            id,
             errorWasReset,
             fieldConfig,
             newValue,
@@ -521,9 +520,12 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
   const touchField = useCallback(
     (id: FieldsId) => {
-      const field = formStore.state.fields[id]
+      const field = formStore.state.fields[id as string]
 
-      invariant(field, fieldNotFoundMessage(id))
+      if (!field) {
+        console.error(fieldNotFoundMessage(id))
+        return
+      }
 
       if (!field.isTouched) {
         handleChange(id, field.value)
@@ -970,7 +972,10 @@ function performFormValidation(
     for (const [id, fieldConfig] of fieldsConfig) {
       const fieldState = formState.fields[id]
 
-      invariant(fieldState, fieldNotFoundMessage(id))
+      if (!fieldState) {
+        globalConfig.handleFormError(new Error(fieldNotFoundMessage(id)))
+        continue
+      }
 
       if (!errorWasReset.has(id)) {
         fieldState.errors = fieldState.errors
@@ -987,7 +992,10 @@ function performFormValidation(
   for (const [id, fieldConfig] of fieldsConfig) {
     const fieldState = formState.fields[id]
 
-    invariant(fieldState, fieldNotFoundMessage(id))
+    if (!fieldState) {
+      globalConfig.handleFormError(new Error(fieldNotFoundMessage(id)))
+      continue
+    }
 
     const validations = [
       ...singleOrMultipleToArray(fieldConfig.validations),

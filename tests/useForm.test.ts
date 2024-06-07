@@ -1,5 +1,5 @@
 import { cleanup, renderHook } from '@testing-library/react'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { useForm } from '../src/main'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
@@ -465,4 +465,32 @@ test('isDiffFromInitial', () => {
     └─
     "
   `)
+})
+
+test('touch not found field', () => {
+  const touchName = emulateAction<true>()
+
+  const consoleError = vi.spyOn(console, 'error')
+
+  renderHook(() => {
+    const { useFormState, touchField } = useForm({
+      initialConfig: {
+        name: { initialValue: 'John' },
+      },
+    })
+
+    const { formFields } = useFormState()
+
+    touchName.useOnAction(() => {
+      touchField('notFound' as 'name')
+    })
+
+    return formFields
+  })
+
+  touchName.call(true)
+
+  expect(consoleError).toHaveBeenCalledWith(
+    'Field with id "notFound" not found',
+  )
 })

@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { useForm } from '../src/main'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
@@ -261,4 +261,32 @@ describe('handle change with skip touch', () => {
       "
     `)
   })
+})
+
+test('handle field not found in handleChange', () => {
+  const setName = emulateAction<string>()
+
+  const consoleError = vi.spyOn(console, 'error')
+
+  renderHook(() => {
+    const { useFormState, handleChange } = useForm({
+      initialConfig: {
+        name: { initialValue: 'John' },
+      },
+    })
+
+    const { formFields } = useFormState()
+
+    setName.useOnAction((name) => {
+      handleChange('notFound' as any, name)
+    })
+
+    return formFields
+  })
+
+  setName.call('Jack')
+
+  expect(consoleError).toHaveBeenCalledWith(
+    'Field with id "notFound" not found',
+  )
 })
