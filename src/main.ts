@@ -1,12 +1,16 @@
 import { useCallback, useMemo } from 'react'
 import { Store, deepEqual, useCreateStore } from 't-state'
 import { singleOrMultipleToArray } from './utils/arrays'
-import { invariant, isObject } from './utils/assertions'
+import { invariant, isFunction, isObject } from './utils/assertions'
 import { useConst, useLatestValue } from './utils/hooks'
 import { mapObjectToObject, objectTypedEntries } from './utils/object'
 import { SingleOrMultiple } from './utils/typing'
 import { SetValue, unwrapSetterValue } from './utils/unwrapSetterValue'
-import { keepPrevIfUnchanged, unwrapGetterOrValue } from './utils/utils'
+import {
+  GetterOrValue,
+  keepPrevIfUnchanged,
+  unwrapGetterOrValue,
+} from './utils/utils'
 
 type GlobalConfig = {
   defaultRequiredMsg: string | (() => string)
@@ -1164,4 +1168,91 @@ export function valueIsEmpty(value: unknown) {
     : typeof value === 'string'
       ? value.trim() === ''
       : value === undefined || value === null
+}
+
+type FormConfigFromValues<T extends Record<string, any>> = {
+  [K in keyof T]: FieldInitialConfig<T[K]>
+}
+
+type FieldDerivedConfigFromValues<
+  T extends Record<string, any>,
+  FM,
+> = FieldDerivedConfig<T[keyof T], FieldsState<FormConfigFromValues<T>>, FM>
+
+type PreTypedValuesFieldConfig<
+  T extends Record<string, any>,
+  K extends keyof T,
+  FM = undefined,
+> = {
+  initialValue: T[K]
+  required?: boolean | FieldDerivedConfigFromValues<T, FM>['required']
+  requiredErrorMsg?: string | false
+  checkIfIsEmpty?: (
+    value: FormConfigFromValues<T>[K]['initialValue'],
+  ) => boolean
+  resetIfDerivedRequiredChangeToFalse?: FieldDerivedConfigFromValues<
+    T,
+    FM
+  >['resetIfDerivedRequiredChangeToFalse']
+  isValid?: FieldsValidation<FormConfigFromValues<T>, FM>[K]
+}
+
+export function useFormWithPreTypedValues<
+  T extends Record<string, any>,
+  FM = undefined,
+>({
+  initialConfig,
+  advancedFormValidation,
+  initialFormMetadata,
+}: {
+  initialConfig: NoInfer<
+    GetterOrValue<{
+      [K in keyof T]: PreTypedValuesFieldConfig<T, K, FM>
+    }>
+  >
+  advancedFormValidation?: AdvancedFormValidation<T>
+  initialFormMetadata?: FM | (() => FM)
+}) {
+  type Config = FormConfigFromValues<T>
+
+  const config = useConst(() => {
+    const fieldsConfig = unwrapGetterOrValue(initialConfig)
+
+    const config: Config = {} as any
+    const derivedConfig: FieldsDerivedConfig<Config, FM> = {}
+    const fieldIsValid: FieldsValidation<Config, FM> = {}
+
+    for (const [id, fieldConfig] of objectTypedEntries(fieldsConfig)) {
+      config[id as keyof Config] = {
+        initialValue: fieldConfig.initialValue,
+        required: isFunction(fieldConfig.required)
+          ? undefined
+          : fieldConfig.required,
+        requiredErrorMsg: fieldConfig.requiredErrorMsg,
+      }
+
+      derivedConfig[id as keyof Config] = {
+        checkIfIsEmpty: fieldConfig.checkIfIsEmpty,
+        required: isFunction(fieldConfig.required)
+          ? fieldConfig.required
+          : undefined,
+        resetIfDerivedRequiredChangeToFalse:
+          fieldConfig.resetIfDerivedRequiredChangeToFalse,
+      }
+
+      fieldIsValid[id as keyof Config] = fieldConfig.isValid
+    }
+
+    return {
+      initialConfig: config,
+      derivatedConfig: derivedConfig,
+      fieldIsValid,
+    }
+  })
+
+  return useForm<Config, FM>({
+    ...config,
+    initialFormMetadata,
+    advancedFormValidation,
+  })
 }

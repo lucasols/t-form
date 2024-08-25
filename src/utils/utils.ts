@@ -2,6 +2,8 @@ import { isFunction } from './assertions'
 
 import { deepEqual } from 't-state'
 
+export type GetterOrValue<T> = T | (() => T)
+
 export function unwrapGetterOrValue<T>(value: T | (() => T)): T {
   return isFunction(value) ? value() : value
 }
