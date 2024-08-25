@@ -463,10 +463,12 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
         validationWasForced: number
         isDiffFromInitial: boolean
         formIsValid: boolean
-        getFieldProps: (id: keyof T) => {
-          value: T[keyof T]['initialValue']
+        getFieldProps: <F extends keyof T>(
+          id: F,
+        ) => {
+          value: T[F]['initialValue']
           errors: string[] | null
-          onChange: (value: T[keyof T]['initialValue']) => void
+          onChange: (value: T[F]['initialValue']) => void
         }
       }
 
