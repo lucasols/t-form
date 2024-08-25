@@ -57,7 +57,7 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
 
 type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
   checkIfIsEmpty?: (value: T) => boolean
-  required?: (context: { fields: F; formMetadata: FM }) => boolean
+  required?: (context: { fields: F; formMetadata: FM | undefined }) => boolean
   resetIfDerivedRequiredChangeToFalse?: { value: T }
 }
 
@@ -87,7 +87,7 @@ export type FieldIsValid<
   value: Value
   fieldMetadata: Metadata
   fields: FS
-  formMetadata: FormMetadata
+  formMetadata: FormMetadata | undefined
   fieldId: FieldId
 }) =>
   | true
@@ -121,7 +121,7 @@ type FormStoreState<T extends FieldsInitialConfig, M = unknown> = {
     [K in keyof T]: FieldState<T[K]['initialValue'], T[K]['metadata']>
   }
   formError: string | false
-  formMetadata: M
+  formMetadata: M | undefined
   validationWasForced: number
 }
 
