@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react'
-import { StrictMode } from 'react'
+import React from 'react'
 import { expect, test } from 'vitest'
 import {
   DynamicFormConfig,
@@ -90,9 +90,9 @@ test('useDynamicForm', async () => {
   }
 
   const { rerender, getByLabelText } = render(
-    <StrictMode>
+    <React.StrictMode>
       <Parent fieldsId={['a', 'b']} />
-    </StrictMode>,
+    </React.StrictMode>,
   )
 
   fireEvent.change(getByLabelText('a'), {
@@ -119,9 +119,9 @@ test('useDynamicForm', async () => {
   await sleep(50)
 
   rerender(
-    <StrictMode>
+    <React.StrictMode>
       <Parent fieldsId={['c']} />
-    </StrictMode>,
+    </React.StrictMode>,
   )
 
   await sleep(50)
