@@ -1,15 +1,15 @@
-import { render, fireEvent } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { expect, test } from 'vitest'
 import {
   DynamicFormConfig,
   DynamicFormStore,
   useDynamicForm,
 } from '../src/main'
+import { useOnChange } from '../src/utils/hooks'
 import { mapArrayToObject } from '../src/utils/object'
 import { createRenderStore } from './utils/rendersStore'
 import { sleep } from './utils/utils'
-import React, { StrictMode } from 'react'
-import { useOnChange } from '../src/utils/hooks'
 
 test('useDynamicForm', async () => {
   const childRerenders: Record<string, string[]> = {}
@@ -33,7 +33,7 @@ test('useDynamicForm', async () => {
       childRerenders[fieldId] = []
     }
 
-    childRerenders[fieldId]!.push(field.value)
+    childRerenders[fieldId].push(field.value)
 
     return (
       <input

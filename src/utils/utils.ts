@@ -18,7 +18,7 @@ export function deepFreeze<T extends Record<string, any> | any[]>(obj: T): T {
   if (typeof obj === 'object') {
     Object.values(obj).forEach((value) => {
       if (value && typeof value === 'object' && !Object.isFrozen(value)) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+         
         deepFreeze(value)
       }
     })
