@@ -177,7 +177,7 @@ export type UpdateFieldConfig<
   checkIfIsEmpty?: (value: T[K]['initialValue']) => boolean
   derivedRequired?: (context: {
     fields: FieldsState<T>
-    formMetadata: FM
+    formMetadata: FM | undefined
   }) => boolean
   simpleFieldIsValid?: FieldSimplifiedValidation<
     T[K]['initialValue'],
