@@ -1,9 +1,9 @@
 import { renderHook } from '@testing-library/react'
-import { useForm } from '../src/main'
-import { createRenderStore } from './utils/rendersStore'
-import { emulateAction } from './utils/emulateAction'
-import { simplifyFieldsState } from './utils/simplifyFieldsState'
 import { expect, test } from 'vitest'
+import { useForm } from '../src/main'
+import { emulateAction } from './utils/emulateAction'
+import { createRenderStore } from './utils/rendersStore'
+import { simplifyFieldsState } from './utils/simplifyFieldsState'
 
 test('should not clean errors from derivated config', () => {
   const renders = createRenderStore()
@@ -22,7 +22,7 @@ test('should not clean errors from derivated config', () => {
           initialValue: null,
         },
       },
-      derivatedConfig: {
+      derivedConfig: {
         brCnpj: {
           required({ fields }) {
             return fields.brCompanyType.value !== 'pf'
@@ -101,7 +101,7 @@ test('resetIfDerivedRequiredChangeToFalse', () => {
           initialValue: null as string | null,
         },
       },
-      derivatedConfig: {
+      derivedConfig: {
         brCnpj: {
           required({ fields }) {
             return fields.brCompanyType.value !== 'pf'
@@ -176,7 +176,7 @@ test('derivated config based on field own value', () => {
           required: true,
         },
       },
-      derivatedConfig: {
+      derivedConfig: {
         arrayOrNull: {
           required({ fields }) {
             return fields.arrayOrNull.value !== null

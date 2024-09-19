@@ -213,7 +213,7 @@ describe('required fields', () => {
           age: { initialValue: null as null | number },
           birthDate: { initialValue: null as null | Date },
         },
-        derivatedConfig: {
+        derivedConfig: {
           birthDate: {
             required: ({ fields: { age } }) => !age.isEmpty,
           },
@@ -349,7 +349,7 @@ describe('check if is empty', () => {
         initialConfig: {
           name: { initialValue: '' },
         },
-        derivatedConfig: {
+        derivedConfig: {
           name: { checkIfIsEmpty: (value) => value === 'not empty' },
         },
       })

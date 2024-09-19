@@ -48,11 +48,13 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
   required?: boolean
   metadata?: M
   requiredErrorMsg?: string | false
+  untouchable?: boolean
   advancedCustomValue?: T
   /** @internal */
   _validation?: FieldSimplifiedValidation<any, any>
   /** @internal */
   _isEmpty?: (value: any) => boolean
+  /** @internal */
 }
 
 type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
@@ -172,6 +174,7 @@ export type UpdateFieldConfig<
   initialValue?: T[K]['initialValue']
   required?: boolean
   isTouched?: boolean
+  isUntouchable?: boolean
   metadata?: T[K]['metadata']
   requiredErrorMsg?: string | false
   checkIfIsEmpty?: (value: T[K]['initialValue']) => boolean
@@ -216,16 +219,14 @@ type ArrayFieldsConfig<T extends FieldsInitialConfig> = {
 
 export function useForm<T extends FieldsInitialConfig, M = undefined>({
   initialConfig: fieldsInitialConfig,
-  derivatedConfig: fieldsDerivedConfig,
+  derivedConfig: fieldsDerivedConfig,
   fieldIsValid: validations,
   advancedFormValidation,
   arrayFieldsConfig,
   initialFormMetadata,
 }: {
   initialConfig: T | (() => T)
-  derivatedConfig?:
-    | FieldsDerivedConfig<T, M>
-    | (() => FieldsDerivedConfig<T, M>)
+  derivedConfig?: FieldsDerivedConfig<T, M> | (() => FieldsDerivedConfig<T, M>)
   fieldIsValid?: FieldsValidation<T, M> | (() => FieldsValidation<T, M>)
   advancedFormValidation?: AdvancedFormValidation<T>
   arrayFieldsConfig?: ArrayFieldsConfig<T> | (() => ArrayFieldsConfig<T>)
@@ -393,20 +394,24 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
             continue
           }
 
-          const skipTouchConfig = options && options.skipTouch
+          const fieldConfig = formConfig.fieldsMap.get(id)
 
-          let shouldSkipTouch = false
+          let shouldSkipTouch = !!fieldConfig?.untouchable
 
-          if (skipTouchConfig) {
-            if (Array.isArray(skipTouchConfig)) {
-              shouldSkipTouch = skipTouchConfig.includes(id)
-            } else {
-              shouldSkipTouch = true
+          if (!shouldSkipTouch) {
+            const skipTouchConfig = options && options.skipTouch
+
+            if (skipTouchConfig) {
+              if (Array.isArray(skipTouchConfig)) {
+                shouldSkipTouch = skipTouchConfig.includes(id)
+              } else {
+                shouldSkipTouch = true
+              }
             }
-          }
 
-          if (options && options.touchOnly) {
-            shouldSkipTouch = !options.touchOnly.includes(id)
+            if (options && options.touchOnly) {
+              shouldSkipTouch = !options.touchOnly.includes(id)
+            }
           }
 
           if (!shouldSkipTouch) {
@@ -414,7 +419,6 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
           }
 
           const fieldState = draft.fields[id]
-          const fieldConfig = formConfig.fieldsMap.get(id)
 
           if (!fieldState || !fieldConfig) {
             console.error(fieldNotFoundMessage(id))
@@ -619,6 +623,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                     required: newConfig.derivedRequired,
                   },
                   validations: newConfig.fieldIsValid,
+                  untouchable: newConfig.isUntouchable ?? false,
                   _metadata: newConfig.metadata,
                   arrayConfig: fieldConfig?.arrayConfig,
                   simpleValidations: fieldConfig?.simpleValidations,
@@ -658,8 +663,14 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 fieldState.initialValue = newConfig.initialValue
               }
 
-              if (newConfig.isTouched !== undefined) {
-                fieldState.isTouched = newConfig.isTouched
+              if (newConfig.isUntouchable !== undefined) {
+                fieldConfig.untouchable = newConfig.isUntouchable
+              }
+
+              if (!fieldConfig.untouchable) {
+                if (newConfig.isTouched !== undefined) {
+                  fieldState.isTouched = newConfig.isTouched
+                }
               }
 
               let valueWasChanged = false
@@ -1177,7 +1188,7 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
 
     return {
       initialConfig: config,
-      derivatedConfig: derivedConfig,
+      derivedConfig,
       fieldIsValid,
       advancedFormValidation,
       formMetadata: initialConfig.formMetadata,
@@ -1194,6 +1205,7 @@ export type GetFieldInitialConfig<V, M> = {
   metadata?: M
   isValid?: FieldSimplifiedValidation<V, M>
   checkIfIsEmpty?: (value: V) => boolean
+  untouchable?: boolean
 }
 
 export function getFieldConfig<V, M = undefined>({
@@ -1203,6 +1215,7 @@ export function getFieldConfig<V, M = undefined>({
   metadata,
   isValid,
   checkIfIsEmpty,
+  untouchable,
 }: GetFieldInitialConfig<V, M>): FieldInitialConfig<V, M> {
   return {
     initialValue,
@@ -1211,6 +1224,7 @@ export function getFieldConfig<V, M = undefined>({
     metadata,
     _validation: isValid,
     _isEmpty: checkIfIsEmpty,
+    untouchable,
   }
 }
 
@@ -1305,7 +1319,7 @@ export function useFormWithPreTypedValues<
 
     return {
       initialConfig: config,
-      derivatedConfig: derivedConfig,
+      derivedConfig,
       fieldIsValid,
     }
   })

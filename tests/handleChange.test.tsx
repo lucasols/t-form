@@ -290,5 +290,3 @@ test('handle field not found in handleChange', () => {
     'Field with id "notFound" not found',
   )
 })
-
-test('untouchAll', () => {})

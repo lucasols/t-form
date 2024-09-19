@@ -464,7 +464,7 @@ test('update form metadata', () => {
           return true
         },
       },
-      derivatedConfig: {
+      derivedConfig: {
         password: {
           required: ({ formMetadata }) => {
             return formMetadata === 'required'

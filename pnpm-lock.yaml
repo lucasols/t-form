@@ -19,8 +19,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0(eslint@9.10.0)(typescript@5.6.2)
       '@ls-stack/utils':
-        specifier: ^1.13.1
-        version: 1.13.1
+        specifier: ^1.13.2
+        version: 1.13.2
       '@testing-library/jest-dom':
         specifier: ^6.5.0
         version: 6.5.0
@@ -491,8 +491,8 @@ packages:
     peerDependencies:
       eslint: ^9.9.1
 
-  '@ls-stack/utils@1.13.1':
-    resolution: {integrity: sha512-pPEhUwWA0oIz52yhgLMDKDLyLS0UexmA393WSc1YJ4ThDxA7AgaVEG+u3HlohwDewd3pQ6ooNvy9kiPLkM2Z+w==}
+  '@ls-stack/utils@1.13.2':
+    resolution: {integrity: sha512-NdQwbTwnp5ZOvjh5ur/BHINzTy4RCaNBUAjN0SkNekVDeYGz4jzruCgOZxIWRkGFPKWEXkeip3vKkJW33xuQ2g==}
     engines: {node: '>=20.0.0'}
 
   '@nodelib/fs.scandir@2.1.5':
@@ -2551,7 +2551,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@ls-stack/utils@1.13.1': {}
+  '@ls-stack/utils@1.13.2': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:

@@ -35,7 +35,7 @@
   },
   "devDependencies": {
     "@ls-stack/extended-lint": "^0.2.0",
-    "@ls-stack/utils": "^1.13.1",
+    "@ls-stack/utils": "^1.13.2",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
     "@types/eslint__js": "^8.42.3",
