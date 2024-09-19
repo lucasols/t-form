@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-check
-import { fixupPluginRules } from '@eslint/compat'
 import eslint from '@eslint/js'
-// @ts-ignore
-import { rules } from '@lucasols/eslint-plugin-extended-lint'
+import { extendedLintPlugin } from '@ls-stack/extended-lint'
 import eslintUnicornPlugin from 'eslint-plugin-unicorn'
 import vitest from 'eslint-plugin-vitest'
 import tseslint from 'typescript-eslint'
@@ -33,7 +30,7 @@ export default tseslint.config(
   },
   {
     plugins: {
-      '@lucasols/extended-lint': fixupPluginRules({ rules }),
+      '@lucasols/extended-lint': extendedLintPlugin,
       unicorn: eslintUnicornPlugin,
       vitest,
     },

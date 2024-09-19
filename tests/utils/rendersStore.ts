@@ -2,6 +2,7 @@ import { deepEqual } from 't-state'
 import { filterAndMap } from '../../src/utils/arrays'
 import { pick } from '../../src/utils/object'
 
+/** @deprecated  use createLoggerStore instead */
 export function createRenderStore() {
   let renders: Record<string, unknown>[] = []
   let rendersTime: number[] = []

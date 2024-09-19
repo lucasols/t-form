@@ -1,12 +1,12 @@
-import { renderHook } from '@testing-library/react'
+import { createLoggerStore, getResultFn } from '@ls-stack/utils/testUtils'
+import { act, renderHook } from '@testing-library/react'
 import { expect, test } from 'vitest'
 import { DynamicFormInitialConfig, useForm } from '../src/main'
 import { emulateAction } from './utils/emulateAction'
-import { createRenderStore } from './utils/rendersStore'
 import { simplifyFieldsState } from './utils/simplifyFieldsState'
 
 test('update a field config', () => {
-  const renders = createRenderStore()
+  const renders = createLoggerStore()
 
   const updateConfigAction = emulateAction<
     Parameters<
@@ -50,61 +50,61 @@ test('update a field config', () => {
   })
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: true
-      ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
-      └─
-      "
-    `)
+    "
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    "
+  `)
 
   updateConfigAction.call([{ fields: { password: { required: true } } }])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ---
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: false
-      ⎢ password: {val:, initV:, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
-      └─
-      "
-    `)
+    "
+    ⋅⋅⋅
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ❌
+    ⋅ password: {val:'', initV:'', req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    "
+  `)
 
   updateConfigAction.call([
     { fields: { password: { initialValue: 'initial value' } } },
   ])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ---
-      ┌─
-      ⎢ isDiffFromInitial: true
-      ⎢ formIsValid: false
-      ⎢ password: {val:, initV:initial value, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:Y, isL:N}
-      └─
-      "
-    `)
+    "
+    ⋅⋅⋅
+    ┌─
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ❌
+    ⋅ password: {val:'', initV:initial value, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:Y, isL:N}
+    └─
+    "
+  `)
 
   setPassword.call('12345')
   updateConfigAction.call([{ fields: { password: { isTouched: false } } }])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ---
-      ┌─
-      ⎢ isDiffFromInitial: true
-      ⎢ formIsValid: true
-      ⎢ password: {val:12345, initV:initial value, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
-      └─
-      ┌─
-      ⎢ isDiffFromInitial: true
-      ⎢ formIsValid: true
-      ⎢ password: {val:12345, initV:initial value, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:Y, isL:N}
-      └─
-      "
-    `)
+    "
+    ⋅⋅⋅
+    ┌─
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:12345, initV:initial value, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    └─
+    ┌─
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:12345, initV:initial value, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:Y, isL:N}
+    └─
+    "
+  `)
 
   updateConfigAction.call([
     {
@@ -118,15 +118,15 @@ test('update a field config', () => {
   ])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ---
-      ┌─
-      ⎢ isDiffFromInitial: true
-      ⎢ formIsValid: false
-      ⎢ password: {val:12345, initV:initial value, req:Y, errors:[Invalid], isValid:N, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
-      └─
-      "
-    `)
+    "
+    ⋅⋅⋅
+    ┌─
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ❌
+    ⋅ password: {val:12345, initV:initial value, req:Y, errors:[Invalid], isValid:N, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    └─
+    "
+  `)
 
   updateConfigAction.call([
     {
@@ -139,15 +139,15 @@ test('update a field config', () => {
   ])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ---
-      ┌─
-      ⎢ isDiffFromInitial: true
-      ⎢ formIsValid: false
-      ⎢ password: {val:12345, initV:initial value, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
-      └─
-      "
-    `)
+    "
+    ⋅⋅⋅
+    ┌─
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ❌
+    ⋅ password: {val:12345, initV:initial value, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
+    └─
+    "
+  `)
 
   updateConfigAction.call([
     {
@@ -161,11 +161,11 @@ test('update a field config', () => {
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
     "
-    ---
+    ⋅⋅⋅
     ┌─
-    ⎢ isDiffFromInitial: true
-    ⎢ formIsValid: true
-    ⎢ password: {val:12345, initV:initial value, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:12345, initV:initial value, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
     └─
     "
   `)
@@ -176,18 +176,18 @@ test('update a field config', () => {
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
     "
-    ---
+    ⋅⋅⋅
     ┌─
-    ⎢ isDiffFromInitial: true
-    ⎢ formIsValid: true
-    ⎢ password: {val:12345, initV:initial value, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:Y, isDiff:Y, m:{foo:bar}, isL:N}
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:12345, initV:initial value, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:Y, isDiff:Y, m:{foo:bar}, isL:N}
     └─
     "
   `)
 })
 
 test('remove field', () => {
-  const renders = createRenderStore()
+  const renders = createLoggerStore()
 
   const removeField = emulateAction()
 
@@ -215,32 +215,28 @@ test('remove field', () => {
   })
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: true
-      ⎢ password: {value:, errors:null, isValid:true}
-      ⎢ name: {value:, errors:null, isValid:true}
-      └─
-      "
-    `)
+    "
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {value:'', errors:null, isValid:✅}
+    ⋅ name: {value:'', errors:null, isValid:✅}
+    └─
+    "
+  `)
 
   removeField.call()
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ---
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: true
-      ⎢ name: {value:, errors:null, isValid:true}
-      └─
-      "
-    `)
+    "
+    ⋅⋅⋅
+    -> isDiffFromInitial: ❌ ⋅ formIsValid: ✅ ⋅ name: {value:'', errors:null, isValid:✅}
+    "
+  `)
 })
 
 test('add field', () => {
-  const renders = createRenderStore()
+  const renders = createLoggerStore()
 
   const addField = emulateAction()
 
@@ -269,24 +265,24 @@ test('add field', () => {
   addField.call()
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: true
-      ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
-      └─
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: true
-      ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
-      ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
-      └─
-      "
-    `)
+    "
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⋅ name: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    "
+  `)
 })
 
 test('merge and removeExcess', () => {
-  const renders = createRenderStore()
+  const renders = createLoggerStore()
 
   const mergeAndRemoveExcess = emulateAction()
 
@@ -318,24 +314,20 @@ test('merge and removeExcess', () => {
   mergeAndRemoveExcess.call()
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: true
-      ⎢ password: {value:, initialValue:}
-      ⎢ name: {value:, initialValue:}
-      └─
-      ┌─
-      ⎢ isDiffFromInitial: true
-      ⎢ formIsValid: true
-      ⎢ password: {value:, initialValue:12345}
-      └─
-      "
-    `)
+    "
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {value:'', initialValue:''}
+    ⋅ name: {value:'', initialValue:''}
+    └─
+    -> isDiffFromInitial: ✅ ⋅ formIsValid: ✅ ⋅ password: {value:'', initialValue:12345}
+    "
+  `)
 })
 
 test('override some fields', () => {
-  const renders = createRenderStore()
+  const renders = createLoggerStore()
 
   const overrideSomeFields = emulateAction()
 
@@ -373,25 +365,25 @@ test('override some fields', () => {
   overrideSomeFields.call()
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
-      "
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: false
-      ⎢ password: {val:, initV:, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, m:{foo:bar}, isL:N}
-      ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
-      └─
-      ┌─
-      ⎢ isDiffFromInitial: false
-      ⎢ formIsValid: true
-      ⎢ password: {val:12345, initV:12345, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
-      ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
-      └─
-      "
-    `)
+    "
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ❌
+    ⋅ password: {val:'', initV:'', req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, m:{foo:bar}, isL:N}
+    ⋅ name: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:12345, initV:12345, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⋅ name: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    └─
+    "
+  `)
 })
 
 test('override all', () => {
-  const renders = createRenderStore()
+  const renders = createLoggerStore()
 
   const overrideAll = emulateAction()
 
@@ -433,23 +425,23 @@ test('override all', () => {
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
     "
     ┌─
-    ⎢ isDiffFromInitial: false
-    ⎢ formIsValid: false
-    ⎢ password: {val:, initV:, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, m:{foo:bar}, isL:N}
-    ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ❌
+    ⋅ password: {val:'', initV:'', req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, m:{foo:bar}, isL:N}
+    ⋅ name: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     ┌─
-    ⎢ isDiffFromInitial: false
-    ⎢ formIsValid: true
-    ⎢ password: {val:12345, initV:12345, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
-    ⎢ newField: {val:new field, initV:new field, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:12345, initV:12345, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+    ⋅ newField: {val:new field, initV:new field, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
     └─
     "
   `)
 })
 
 test('update form metadata', () => {
-  const renders = createRenderStore()
+  const renders = createLoggerStore()
 
   type Metadata = 'invalid' | 'required' | null
 
@@ -503,29 +495,29 @@ test('update form metadata', () => {
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
     "
     ┌─
-    ⎢ isDiffFromInitial: false
-    ⎢ formIsValid: true
-    ⎢ metadata: invalid
-    ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ metadata: invalid
+    ⋅ password: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     ┌─
-    ⎢ isDiffFromInitial: false
-    ⎢ formIsValid: false
-    ⎢ metadata: required
-    ⎢ password: {val:, initV:, req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ❌
+    ⋅ metadata: required
+    ⋅ password: {val:'', initV:'', req:Y, errors:null, isValid:N, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     ┌─
-    ⎢ isDiffFromInitial: false
-    ⎢ formIsValid: true
-    ⎢ metadata: null
-    ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ metadata: null
+    ⋅ password: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     "
   `)
 })
 
 test('update initialValue should update isDiffFromInitial', () => {
-  const renders = createRenderStore()
+  const renders = createLoggerStore()
 
   const updateInitialValue = emulateAction()
   const setPassword = emulateAction<string>()
@@ -571,19 +563,144 @@ test('update initialValue should update isDiffFromInitial', () => {
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
     "
     ┌─
-    ⎢ isDiffFromInitial: false
-    ⎢ formIsValid: false
-    ⎢ password: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ❌
+    ⋅ password: {val:'', initV:'', req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
     └─
     ┌─
-    ⎢ isDiffFromInitial: true
-    ⎢ formIsValid: true
-    ⎢ password: {val:12345, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ✅
+    ⋅ password: {val:12345, initV:'', req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
     └─
     ┌─
-    ⎢ isDiffFromInitial: false
-    ⎢ formIsValid: false
-    ⎢ password: {val:12345, initV:12345, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:N, isL:N}
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ❌
+    ⋅ password: {val:12345, initV:12345, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:N, isL:N}
+    └─
+    "
+  `)
+})
+
+test('keep touched values', () => {
+  const renders = createLoggerStore()
+
+  const { result } = renderHook(() => {
+    const { useFormState, updateConfig, handleChange, untouchAll } = useForm({
+      initialConfig: {
+        password: { initialValue: '' },
+        name: { initialValue: '' },
+      },
+    })
+
+    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+
+    renders.add({
+      isDiffFromInitial,
+      formIsValid,
+      ...simplifyFieldsState(formFields, [
+        'value',
+        'initialValue',
+        'isTouched',
+      ]),
+    })
+
+    return { updateConfig, handleChange, untouchAll }
+  })
+
+  const updateConfig = getResultFn(() => result.current.updateConfig)
+  const handleChange = getResultFn(() => result.current.handleChange)
+  const untouchAll = getResultFn(() => result.current.untouchAll)
+
+  act(() => {
+    renders.addMark('touch password')
+    handleChange('password', '12345')
+  })
+
+  expect(renders.snapshot).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {value:'', initialValue:'', isTouched:❌}
+    ⋅ name: {value:'', initialValue:'', isTouched:❌}
+    └─
+
+    >>> touch password
+
+    ┌─
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ✅
+    ⋅ password: {value:12345, initialValue:'', isTouched:✅}
+    ⋅ name: {value:'', initialValue:'', isTouched:❌}
+    └─
+    "
+  `)
+
+  act(() => {
+    updateConfig({
+      updateOnlyUntouchedValues: true,
+      fields: {
+        password: {
+          initialValue: '6789',
+        },
+        name: {
+          initialValue: 'John',
+        },
+      },
+    })
+  })
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ⋅⋅⋅
+    ┌─
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ✅
+    ⋅ password: {value:12345, initialValue:6789, isTouched:✅}
+    ⋅ name: {value:John, initialValue:John, isTouched:❌}
+    └─
+    "
+  `)
+
+  act(() => {
+    renders.addMark('untouchAll')
+    untouchAll()
+  })
+
+  act(() => {
+    renders.addMark('update password and name initial values')
+    updateConfig({
+      updateOnlyUntouchedValues: true,
+      fields: {
+        password: {
+          initialValue: 'abc',
+        },
+        name: {
+          initialValue: 'Hi',
+        },
+      },
+    })
+  })
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ⋅⋅⋅
+    >>> untouchAll
+
+    ┌─
+    ⋅ isDiffFromInitial: ✅
+    ⋅ formIsValid: ✅
+    ⋅ password: {value:12345, initialValue:6789, isTouched:❌}
+    ⋅ name: {value:John, initialValue:John, isTouched:❌}
+    └─
+
+    >>> update password and name initial values
+
+    ┌─
+    ⋅ isDiffFromInitial: ❌
+    ⋅ formIsValid: ✅
+    ⋅ password: {value:abc, initialValue:abc, isTouched:❌}
+    ⋅ name: {value:Hi, initialValue:Hi, isTouched:❌}
     └─
     "
   `)

@@ -572,10 +572,20 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       fields,
       updateMode = 'merge',
       formMetadata,
+      updateOnlyUntouchedValues,
     }: {
       fields?: UpdateFormConfig<T>
       formMetadata?: M
+      /**
+       * @default merge
+       *
+       * Modes:
+       * - merge: merges the new config with the old one
+       * - overwriteAll: overwrites all the fields with the new config
+       * - mergeAndRemoveExcessFields: merges the new config with the old one and removes the excess fields
+       */
       updateMode?: 'merge' | 'overwriteAll' | 'mergeAndRemoveExcessFields'
+      updateOnlyUntouchedValues?: boolean
     }) => {
       formStore.batch(() => {
         if (fields) {
@@ -621,6 +631,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 continue
               }
 
+              // merge mode
+
               if (newConfig === 'remove') {
                 formConfig.fieldsMap.delete(id)
                 delete draft.fields[id]
@@ -646,12 +658,27 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 fieldState.initialValue = newConfig.initialValue
               }
 
-              if (Object.hasOwn(newConfig, 'value')) {
-                fieldState.value = newConfig.value
-              }
-
               if (newConfig.isTouched !== undefined) {
                 fieldState.isTouched = newConfig.isTouched
+              }
+
+              let valueWasChanged = false
+              if (Object.hasOwn(newConfig, 'value')) {
+                const skipUpdate =
+                  updateOnlyUntouchedValues && fieldState.isTouched
+
+                if (!skipUpdate) {
+                  valueWasChanged = true
+                  fieldState.value = newConfig.value
+                }
+              }
+
+              if (
+                !valueWasChanged &&
+                updateOnlyUntouchedValues &&
+                !fieldState.isTouched
+              ) {
+                fieldState.value = fieldState.initialValue
               }
 
               if (newConfig.fieldIsValid !== undefined) {
@@ -708,6 +735,20 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     },
     [forceFormUpdate, formConfig, formStore],
   )
+
+  const untouchAll = useCallback(() => {
+    const mergeCfg: UpdateFormConfig<T> = {}
+
+    for (const id of Object.keys(formStore.state.fields)) {
+      mergeCfg[id as keyof T] = {
+        isTouched: false,
+      }
+    }
+
+    updateConfig({
+      fields: mergeCfg,
+    })
+  }, [formStore.state.fields, updateConfig])
 
   const arrayFields = useMemo(() => {
     type ArrayFieldsIds = {
@@ -795,6 +836,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     forceFormUpdate,
     arrayFields,
     setTemporaryError,
+    untouchAll,
     /** @internal */
     formConfig,
   }
