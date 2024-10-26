@@ -1,6 +1,6 @@
 import { cleanup, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { useForm } from '../src/main'
+import { useForm, useFormState } from '../src/main'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
 import { simplifyFieldsState } from './utils/simplifyFieldsState'
@@ -33,13 +33,13 @@ test('lazy initial value', () => {
   const renders = createRenderStore()
 
   renderHook(() => {
-    const { useFormState } = useForm({
+    const { formTypedProps } = useForm({
       initialConfig: () => ({
         name: { initialValue: 'John' },
       }),
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedProps)
 
     renders.add(simplifyFieldsState(formFields))
   })
@@ -98,13 +98,13 @@ describe('required fields', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedProps, handleChange } = useForm({
         initialConfig: {
           name: { initialValue: '', required: true },
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedProps)
 
       renders.add(simplifyFieldsState(formFields))
 
@@ -173,7 +173,7 @@ describe('required fields', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedProps, handleChange } = useForm({
         initialConfig: {
           name: {
             initialValue: 'Ok',
@@ -183,7 +183,7 @@ describe('required fields', () => {
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedProps)
 
       renders.add(simplifyFieldsState(formFields))
 
@@ -276,13 +276,13 @@ describe('required fields', () => {
     const touchName = emulateAction()
 
     renderHook(() => {
-      const { useFormState, touchField } = useForm({
+      const { formTypedProps, touchField } = useForm({
         initialConfig: {
           name: { initialValue: '', required: true },
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedProps)
 
       renders.add(simplifyFieldsState(formFields))
 
@@ -307,7 +307,7 @@ describe('check if is empty', () => {
     const renders = createRenderStore()
 
     renderHook(() => {
-      const { useFormState } = useForm({
+      const { formTypedProps } = useForm({
         initialConfig: {
           string: { initialValue: '' },
           string2: { initialValue: '  ' },
@@ -319,7 +319,7 @@ describe('check if is empty', () => {
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedProps)
 
       renders.add(simplifyFieldsState(formFields, ['value', 'isEmpty']))
     })
@@ -345,7 +345,7 @@ describe('check if is empty', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedProps, handleChange } = useForm({
         initialConfig: {
           name: { initialValue: '' },
         },
@@ -354,7 +354,7 @@ describe('check if is empty', () => {
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedProps)
 
       setName.useOnAction((name) => {
         handleChange('name', name)
@@ -387,16 +387,17 @@ test('isDiffFromInitial', () => {
   const setAge = emulateAction<number>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedProps, handleChange } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
         age: { initialValue: 10 },
       },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState({
-      mustBeDiffFromInitial: true,
-    })
+    const { formFields, isDiffFromInitial, formIsValid } = useFormState(
+      formTypedProps,
+      { mustBeDiffFromInitial: true },
+    )
 
     renders.add({
       isDiffFromInitial,
@@ -473,13 +474,13 @@ test('touch not found field', () => {
   const consoleError = vi.spyOn(console, 'error')
 
   renderHook(() => {
-    const { useFormState, touchField } = useForm({
+    const { formTypedProps, touchField } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedProps)
 
     touchName.useOnAction(() => {
       touchField('notFound' as 'name')

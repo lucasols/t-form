@@ -1,5 +1,10 @@
 import { useCallback, useMemo } from 'react'
-import { Store, deepEqual, useCreateStore } from 't-state'
+import { deepEqual, Store, useCreateStore } from 't-state'
+import {
+  createFormTypedProps,
+  FormTypedProps,
+  useFormState,
+} from './useFormState'
 import { singleOrMultipleToArray } from './utils/arrays'
 import { invariant, isFunction, isObject } from './utils/assertions'
 import { useConst, useLatestValue } from './utils/hooks'
@@ -11,6 +16,8 @@ import {
   keepPrevIfUnchanged,
   unwrapGetterOrValue,
 } from './utils/utils'
+
+export { useFormState } from './useFormState'
 
 type GlobalConfig = {
   defaultRequiredMsg: string | (() => string)
@@ -127,7 +134,7 @@ type FormStoreState<T extends FieldsInitialConfig, M = unknown> = {
   validationWasForced: number
 }
 
-type FieldsInitialConfig = Record<string, FieldInitialConfig>
+export type FieldsInitialConfig = Record<string, FieldInitialConfig>
 
 export type FieldState<V, M> = {
   value: V
@@ -142,7 +149,7 @@ export type FieldState<V, M> = {
   valueIsLoading: boolean
 }
 
-type FieldsState<T extends FieldsInitialConfig> = {
+export type FieldsState<T extends FieldsInitialConfig> = {
   [P in keyof T]: FieldState<T[P]['initialValue'], T[P]['metadata']>
 }
 
@@ -454,57 +461,16 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     [formStore, formConfig, performExtraUpdates, tempErrors],
   )
 
-  const useFormState = useCallback(
-    ({ mustBeDiffFromInitial = false } = {}) => {
-      type UseFormState = {
-        formFields: FieldsState<T>
-        fieldEntries: [
-          keyof T,
-          FieldState<T[keyof T]['initialValue'], T[keyof T]['metadata']>,
-        ][]
-        formError: string | false
-        someFieldIsLoading: boolean
-        validationWasForced: number
-        isDiffFromInitial: boolean
-        formIsValid: boolean
-        getFieldProps: <F extends keyof T>(
-          id: F,
-        ) => {
-          value: T[F]['initialValue']
-          errors: string[] | null
-          onChange: (value: T[F]['initialValue']) => void
-        }
-      }
-
-      return formStore.useSelector((state): UseFormState => {
-        const fieldEntries = objectTypedEntries(state.fields)
-
-        const { someFieldIsLoading, formIsValid, isDiffFromInitial } =
-          getGenericFormState<T>(state, fieldEntries, mustBeDiffFromInitial)
-
-        return {
-          formFields: state.fields,
-          fieldEntries,
-          formError: state.formError,
-          validationWasForced: state.validationWasForced,
-          someFieldIsLoading,
-          formIsValid,
-          isDiffFromInitial,
-          getFieldProps: (id) => {
-            const fieldState = state.fields[id]
-
-            return {
-              value: fieldState.value,
-              errors: fieldState.errors,
-              onChange: (value) => {
-                handleChange(id, value)
-              },
-            }
-          },
-        }
-      })
-    },
+  const formTypedProps = useMemo(
+    (): FormTypedProps<T, M> => createFormTypedProps(formStore, handleChange),
     [formStore, handleChange],
+  )
+
+  const useFormStateDeprecated = useCallback(
+    ({ mustBeDiffFromInitial = false } = {}) => {
+      return useFormState(formTypedProps, { mustBeDiffFromInitial })
+    },
+    [formTypedProps],
   )
 
   const forceFormUpdate = useCallback(
@@ -838,7 +804,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   }, [formConfig, handleChange])
 
   return {
-    useFormState,
+    /** @deprecated use the exported hook `useFormState(formStore)` instead */
+    useFormState: useFormStateDeprecated,
     handleChange,
     formStore,
     touchField,
@@ -848,6 +815,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     arrayFields,
     setTemporaryError,
     untouchAll,
+    formTypedProps,
     /** @internal */
     formConfig,
   }
