@@ -804,7 +804,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   }, [formConfig, handleChange])
 
   return {
-    /** @deprecated use the exported hook `useFormState(formStore)` instead */
+    /** @deprecated use the exported hook `useFormState(formTypedProps)` instead */
     useFormState: useFormStateDeprecated,
     handleChange,
     formStore,
