@@ -11,13 +11,13 @@ test('read initial value', () => {
   const renders = createRenderStore()
 
   renderHook(() => {
-    const { useFormState } = useForm({
+    const { formTypedProps } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedProps)
 
     renders.add(simplifyFieldsState(formFields))
   })
@@ -57,13 +57,13 @@ test('is diff from initial', () => {
   const setName = emulateAction<string>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedProps, handleChange } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedProps)
 
     renders.add(simplifyFieldsState(formFields))
 
@@ -138,7 +138,7 @@ describe('required fields', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedProps, handleChange } = useForm({
         initialConfig: {
           name: {
             initialValue: 'Ok',
@@ -148,7 +148,7 @@ describe('required fields', () => {
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedProps)
 
       renders.add(simplifyFieldsState(formFields))
 
@@ -208,7 +208,7 @@ describe('required fields', () => {
     const setAge = emulateAction<number | null>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedProps, handleChange } = useForm({
         initialConfig: {
           age: { initialValue: null as null | number },
           birthDate: { initialValue: null as null | Date },
@@ -220,7 +220,7 @@ describe('required fields', () => {
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedProps)
 
       renders.add(
         simplifyFieldsState(formFields, [
