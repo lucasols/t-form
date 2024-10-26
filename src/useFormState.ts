@@ -23,11 +23,11 @@ export function createFormTypedCtx<T extends FieldsInitialConfig, M>(
 }
 
 export function useFormState<T extends FieldsInitialConfig, M>(
-  typedProps: FormTypedCtx<T, M>,
+  typedCtx: FormTypedCtx<T, M>,
   { mustBeDiffFromInitial = false }: { mustBeDiffFromInitial?: boolean } = {},
 ) {
-  const formStore = typedProps[formStoreSymbol]
-  const handleChange = typedProps[handleChangeSymbol]
+  const formStore = typedCtx[formStoreSymbol]
+  const handleChange = typedCtx[handleChangeSymbol]
 
   type UseFormState = {
     formFields: FieldsState<T>
