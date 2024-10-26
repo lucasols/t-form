@@ -10,12 +10,12 @@ import { objectTypedEntries } from './utils/object'
 const formStoreSymbol = Symbol('formStore')
 const handleChangeSymbol = Symbol('handleChange')
 
-export type FormTypedProps<T extends FieldsInitialConfig, M> = {
+export type FormTypedCtx<T extends FieldsInitialConfig, M> = {
   [formStoreSymbol]: FormStore<T, M>
   [handleChangeSymbol]: (id: keyof T, value: any, options?: any) => void
 }
 
-export function createFormTypedProps<T extends FieldsInitialConfig, M>(
+export function createFormTypedCtx<T extends FieldsInitialConfig, M>(
   formStore: FormStore<T, M>,
   handleChange: (id: keyof T, value: any, options?: any) => void,
 ) {
@@ -23,7 +23,7 @@ export function createFormTypedProps<T extends FieldsInitialConfig, M>(
 }
 
 export function useFormState<T extends FieldsInitialConfig, M>(
-  typedProps: FormTypedProps<T, M>,
+  typedProps: FormTypedCtx<T, M>,
   { mustBeDiffFromInitial = false }: { mustBeDiffFromInitial?: boolean } = {},
 ) {
   const formStore = typedProps[formStoreSymbol]

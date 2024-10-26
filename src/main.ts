@@ -1,10 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { deepEqual, Store, useCreateStore } from 't-state'
-import {
-  createFormTypedProps,
-  FormTypedProps,
-  useFormState,
-} from './useFormState'
+import { createFormTypedCtx, FormTypedCtx, useFormState } from './useFormState'
 import { singleOrMultipleToArray } from './utils/arrays'
 import { invariant, isFunction, isObject } from './utils/assertions'
 import { useConst, useLatestValue } from './utils/hooks'
@@ -461,16 +457,16 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     [formStore, formConfig, performExtraUpdates, tempErrors],
   )
 
-  const formTypedProps = useMemo(
-    (): FormTypedProps<T, M> => createFormTypedProps(formStore, handleChange),
+  const formTypedCtx = useMemo(
+    (): FormTypedCtx<T, M> => createFormTypedCtx(formStore, handleChange),
     [formStore, handleChange],
   )
 
   const useFormStateDeprecated = useCallback(
     ({ mustBeDiffFromInitial = false } = {}) => {
-      return useFormState(formTypedProps, { mustBeDiffFromInitial })
+      return useFormState(formTypedCtx, { mustBeDiffFromInitial })
     },
-    [formTypedProps],
+    [formTypedCtx],
   )
 
   const forceFormUpdate = useCallback(
@@ -804,7 +800,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   }, [formConfig, handleChange])
 
   return {
-    /** @deprecated use the exported hook `useFormState(formTypedProps)` instead */
+    /** @deprecated use the exported hook `useFormState(formTypedCtx)` instead */
     useFormState: useFormStateDeprecated,
     handleChange,
     formStore,
@@ -815,7 +811,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     arrayFields,
     setTemporaryError,
     untouchAll,
-    formTypedProps,
+    formTypedCtx,
     /** @internal */
     formConfig,
   }

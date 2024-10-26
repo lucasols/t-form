@@ -11,7 +11,7 @@ test('read initial value', () => {
   const renders = createRenderStore()
 
   renderHook(() => {
-    const { formTypedProps } = useForm({
+    const { formTypedCtx: formTypedProps } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
       },
@@ -33,7 +33,7 @@ test('lazy initial value', () => {
   const renders = createRenderStore()
 
   renderHook(() => {
-    const { formTypedProps } = useForm({
+    const { formTypedCtx: formTypedProps } = useForm({
       initialConfig: () => ({
         name: { initialValue: 'John' },
       }),
@@ -57,7 +57,7 @@ test('is diff from initial', () => {
   const setName = emulateAction<string>()
 
   renderHook(() => {
-    const { formTypedProps, handleChange } = useForm({
+    const { formTypedCtx: formTypedProps, handleChange } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
       },
@@ -98,7 +98,7 @@ describe('required fields', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { formTypedProps, handleChange } = useForm({
+      const { formTypedCtx: formTypedProps, handleChange } = useForm({
         initialConfig: {
           name: { initialValue: '', required: true },
         },
@@ -138,7 +138,7 @@ describe('required fields', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { formTypedProps, handleChange } = useForm({
+      const { formTypedCtx: formTypedProps, handleChange } = useForm({
         initialConfig: {
           name: {
             initialValue: 'Ok',
@@ -173,7 +173,7 @@ describe('required fields', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { formTypedProps, handleChange } = useForm({
+      const { formTypedCtx: formTypedProps, handleChange } = useForm({
         initialConfig: {
           name: {
             initialValue: 'Ok',
@@ -208,7 +208,7 @@ describe('required fields', () => {
     const setAge = emulateAction<number | null>()
 
     renderHook(() => {
-      const { formTypedProps, handleChange } = useForm({
+      const { formTypedCtx: formTypedProps, handleChange } = useForm({
         initialConfig: {
           age: { initialValue: null as null | number },
           birthDate: { initialValue: null as null | Date },
@@ -276,7 +276,7 @@ describe('required fields', () => {
     const touchName = emulateAction()
 
     renderHook(() => {
-      const { formTypedProps, touchField } = useForm({
+      const { formTypedCtx: formTypedProps, touchField } = useForm({
         initialConfig: {
           name: { initialValue: '', required: true },
         },
@@ -307,7 +307,7 @@ describe('check if is empty', () => {
     const renders = createRenderStore()
 
     renderHook(() => {
-      const { formTypedProps } = useForm({
+      const { formTypedCtx: formTypedProps } = useForm({
         initialConfig: {
           string: { initialValue: '' },
           string2: { initialValue: '  ' },
@@ -345,7 +345,7 @@ describe('check if is empty', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { formTypedProps, handleChange } = useForm({
+      const { formTypedCtx: formTypedProps, handleChange } = useForm({
         initialConfig: {
           name: { initialValue: '' },
         },
@@ -387,7 +387,7 @@ test('isDiffFromInitial', () => {
   const setAge = emulateAction<number>()
 
   renderHook(() => {
-    const { formTypedProps, handleChange } = useForm({
+    const { formTypedCtx: formTypedProps, handleChange } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
         age: { initialValue: 10 },
@@ -474,7 +474,7 @@ test('touch not found field', () => {
   const consoleError = vi.spyOn(console, 'error')
 
   renderHook(() => {
-    const { formTypedProps, touchField } = useForm({
+    const { formTypedCtx: formTypedProps, touchField } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
       },
