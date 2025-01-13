@@ -1,5 +1,6 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
   "testing.automaticallyOpenPeekView": "never",
-  "eslint.experimental.useFlatConfig": false
+  "eslint.experimental.useFlatConfig": false,
+  "typescript.preferences.autoImportFileExcludePatterns": ["dist/*"]
 }

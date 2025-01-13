@@ -37,13 +37,7 @@ export type FieldSimplifiedValidation<V, M = unknown> = SingleOrMultiple<
   (args: {
     value: V
     fieldMetadata?: M
-  }) =>
-    | true
-    | string
-    | string[]
-    | SilentInvalid
-    | SilentInvalidIfNotTouched
-    | InvalidValueIsLoading
+  }) => true | string | string[] | SilentInvalid | SilentInvalidIfNotTouched
 >
 
 type FieldInitialConfig<T = unknown, M = unknown> = {
@@ -58,27 +52,26 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
   /** @internal */
   _isEmpty?: (value: any) => boolean
   /** @internal */
+  _isLoading?: (value: any) => boolean
 }
 
 type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
   checkIfIsEmpty?: (value: T) => boolean
   required?: (context: { fields: F; formMetadata: FM | undefined }) => boolean
   resetIfDerivedRequiredChangeToFalse?: { value: T }
+  isLoading?: (value: T) => boolean
 }
 
 export type SilentInvalid = { silentInvalid: true }
-export type InvalidValueIsLoading = { valueIsLoading: true }
 export type SilentInvalidIfNotTouched = {
   silentIfNotTouched: string | string[]
 }
 
 export const invalidFormField: {
   silentInvalid: SilentInvalid
-  valueIsLoading: InvalidValueIsLoading
   silentIfNotTouched: (msg: string | string[]) => SilentInvalidIfNotTouched
 } = {
   silentInvalid: { silentInvalid: true },
-  valueIsLoading: { valueIsLoading: true },
   silentIfNotTouched: (msg: string | string[]) => ({ silentIfNotTouched: msg }),
 }
 
@@ -94,13 +87,7 @@ export type FieldIsValid<
   fields: FS
   formMetadata: FormMetadata | undefined
   fieldId: FieldId
-}) =>
-  | true
-  | string
-  | string[]
-  | SilentInvalid
-  | InvalidValueIsLoading
-  | SilentInvalidIfNotTouched
+}) => true | string | string[] | SilentInvalid | SilentInvalidIfNotTouched
 
 type FieldValidation<T, M, F extends FieldsState<any>, FM, K> =
   | FieldIsValid<T, M, F, FM, K>
@@ -181,6 +168,7 @@ export type UpdateFieldConfig<
   metadata?: T[K]['metadata']
   requiredErrorMsg?: string | false
   checkIfIsEmpty?: (value: T[K]['initialValue']) => boolean
+  isLoading?: (value: T[K]['initialValue']) => boolean
   derivedRequired?: (context: {
     fields: FieldsState<T>
     formMetadata: FM | undefined
@@ -255,6 +243,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
           ...fieldDerivedCfg,
           checkIfIsEmpty:
             initialConfig._isEmpty ?? fieldDerivedCfg?.checkIfIsEmpty,
+          isLoading: initialConfig._isLoading ?? fieldDerivedCfg?.isLoading,
         },
         validations: fieldValidations?.[id],
         arrayConfig: arraysConfig?.[id],
@@ -676,6 +665,13 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 }
               }
 
+              if (newConfig.isLoading !== undefined) {
+                fieldConfig.derived = {
+                  ...fieldConfig.derived,
+                  isLoading: newConfig.isLoading,
+                }
+              }
+
               if (newConfig.metadata !== undefined) {
                 fieldConfig._metadata = newConfig.metadata
                 fieldState.metadata = newConfig.metadata
@@ -1048,6 +1044,14 @@ function performFormValidation(
       fieldState.isValid = false
     }
 
+    if (fieldConfig.derived?.isLoading) {
+      const isLoading = fieldConfig.derived.isLoading(fieldState.value)
+      fieldState.valueIsLoading = isLoading
+      if (isLoading) {
+        fieldState.isValid = false
+      }
+    }
+
     if (fieldState.isEmpty) {
       continue
     }
@@ -1076,8 +1080,6 @@ function performFormValidation(
           }
 
           fieldState.errors.push(...result)
-        } else if ('valueIsLoading' in result) {
-          fieldState.valueIsLoading = true
         } else if ('silentIfNotTouched' in result) {
           if (fieldState.isTouched) {
             if (!fieldState.errors) {
@@ -1145,6 +1147,7 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
       derivedConfig[id] = {
         checkIfIsEmpty: fieldConfig.checkIfIsEmpty,
         required: fieldConfig.derivedRequired,
+        isLoading: fieldConfig.isLoading,
       }
 
       fieldIsValid[id] = fieldConfig.fieldIsValid

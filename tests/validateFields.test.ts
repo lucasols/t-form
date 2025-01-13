@@ -373,68 +373,6 @@ describe('validate field', () => {
     `)
   })
 
-  test('set invalid loading state', () => {
-    const renders = createRenderStore()
-
-    const setFileUrl = emulateAction<string>()
-
-    renderHook(() => {
-      const { useFormState, handleChange } = useForm({
-        initialConfig: {
-          fileUrl: { initialValue: '', required: true },
-        },
-        fieldIsValid: {
-          fileUrl: ({ value }) => {
-            return value === 'uploading' ? { valueIsLoading: true } : true
-          },
-        },
-      })
-
-      const { formFields, someFieldIsLoading } = useFormState()
-
-      renders.add({
-        someFieldIsLoading,
-        value: formFields.fileUrl.value,
-        errors: formFields.fileUrl.errors,
-        isValid: formFields.fileUrl.isValid,
-        isLoading: formFields.fileUrl.valueIsLoading,
-      })
-
-      setFileUrl.useOnAction((age) => {
-        handleChange('fileUrl', age)
-      })
-    })
-
-    setFileUrl.call('uploading')
-
-    setFileUrl.call('https://example.com/file')
-
-    expect(renders.snapshot).toMatchInlineSnapshot(`
-      "
-      ┌─
-      ⎢ someFieldIsLoading: false
-      ⎢ value: ''
-      ⎢ errors: null
-      ⎢ isValid: false
-      ⎢ isLoading: false
-      └─
-      ┌─
-      ⎢ someFieldIsLoading: true
-      ⎢ value: uploading
-      ⎢ errors: null
-      ⎢ isValid: false
-      ⎢ isLoading: true
-      └─
-      ┌─
-      ⎢ someFieldIsLoading: false
-      ⎢ value: https://example.com/file
-      ⎢ errors: null
-      ⎢ isValid: true
-      ⎢ isLoading: false
-      └─
-      "
-    `)
-  })
   test('silent validation', () => {
     const renders = createRenderStore()
 
