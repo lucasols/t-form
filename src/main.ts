@@ -1173,6 +1173,7 @@ export type GetFieldInitialConfig<V, M> = {
   isValid?: FieldSimplifiedValidation<V, M>
   checkIfIsEmpty?: (value: V) => boolean
   untouchable?: boolean
+  isLoading?: (value: V) => boolean
 }
 
 export function getFieldConfig<V, M = undefined>({
@@ -1182,6 +1183,7 @@ export function getFieldConfig<V, M = undefined>({
   metadata,
   isValid,
   checkIfIsEmpty,
+  isLoading,
   untouchable,
 }: GetFieldInitialConfig<V, M>): FieldInitialConfig<V, M> {
   return {
@@ -1192,6 +1194,7 @@ export function getFieldConfig<V, M = undefined>({
     _validation: isValid,
     _isEmpty: checkIfIsEmpty,
     untouchable,
+    _isLoading: isLoading,
   }
 }
 

@@ -1,7 +1,12 @@
 import { createLoggerStore } from '@ls-stack/utils/testUtils'
 import { act, renderHook } from '@testing-library/react'
 import { expect, test } from 'vitest'
-import { useDynamicForm, useForm, useFormState } from '../src/main'
+import {
+  getFieldConfig,
+  useDynamicForm,
+  useForm,
+  useFormState,
+} from '../src/main'
 
 test('set invalid loading state', () => {
   const renders = createLoggerStore()
@@ -66,13 +71,14 @@ test('set invalid loading state with empty value', () => {
   const { result } = renderHook(() => {
     const { handleChange, formTypedCtx } = useForm({
       initialConfig: {
-        fileUrl: { initialValue: { value: '', isLoading: false } },
-      },
-      derivedConfig: {
-        fileUrl: {
-          checkIfIsEmpty: (value) => value.value === '',
+        fileUrl: getFieldConfig<{
+          value: string
+          isLoading: boolean
+        }>({
+          initialValue: { value: '', isLoading: false },
           isLoading: (value) => value.isLoading,
-        },
+          checkIfIsEmpty: (value) => value.value === '',
+        }),
       },
     })
 
