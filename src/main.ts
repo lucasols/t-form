@@ -541,7 +541,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
        */
       updateMode?: 'merge' | 'overwriteAll' | 'mergeAndRemoveExcessFields'
       /**
-       * If true fields without a new `value` but with a new `initialValue` will update their value if they are untouched
+       * If `true` fields without a new `value` but with a new `initialValue` will update their value to
+       * the `initialValue` if they are untouched
        */
       updateUntouchedWithInitial?: boolean
     }) => {
