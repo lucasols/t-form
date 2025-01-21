@@ -582,7 +582,7 @@ test('update initialValue should update isDiffFromInitial', () => {
   `)
 })
 
-describe('updateUntouchedValues', () => {
+describe('updateUntouchedWithInitial', () => {
   const renders = createLoggerStore()
 
   const { result } = renderHook(() => {
@@ -615,7 +615,7 @@ describe('updateUntouchedValues', () => {
     return result.current.formFields
   }
 
-  test('update a untouched fields from the initial value', () => {
+  test('update untouched fields with the initial value', () => {
     act(() => {
       renders.addMark('touch password')
       handleChange('password', '12345')
@@ -643,7 +643,7 @@ describe('updateUntouchedValues', () => {
 
     act(() => {
       updateConfig({
-        updateUntouchedValues: true,
+        updateUntouchedWithInitial: true,
         fields: {
           password: {
             initialValue: '6789',
@@ -675,7 +675,7 @@ describe('updateUntouchedValues', () => {
     act(() => {
       renders.addMark('update password and name initial values')
       updateConfig({
-        updateUntouchedValues: true,
+        updateUntouchedWithInitial: true,
         fields: {
           password: {
             initialValue: 'abc',
@@ -711,51 +711,49 @@ describe('updateUntouchedValues', () => {
   `)
   })
 
-  test('ignore updates of value on touched fields', () => {
+  test('if the value is set in config don use initial value', () => {
     act(() => {
-      renders.addMark('change password value')
-      handleChange('password', 'def')
-    })
-
-    act(() => {
-      renders.addMark('update value via updateConfig')
+      renders.addMark('update config')
       updateConfig({
-        updateUntouchedValues: false,
+        updateUntouchedWithInitial: true,
         fields: {
           password: {
-            value: 'def',
+            value: 'new_value',
+            initialValue: 'abc',
+          },
+          name: {
+            initialValue: 'lucas',
           },
         },
       })
     })
 
-    // value of password should not be updated because it was touched
     expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
       ⋅⋅⋅
-      >>> change password value
+      >>> update config
 
       ┌─
       ⋅ isDiffFromInitial: ✅
       ⋅ formIsValid: ✅
-      ⋅ password: {value:def, initialValue:abc, isTouched:✅}
-      ⋅ name: {value:Hi, initialValue:Hi, isTouched:❌}
+      ⋅ password: {value:new_value, initialValue:abc, isTouched:❌}
+      ⋅ name: {value:lucas, initialValue:lucas, isTouched:❌}
       └─
-
-      >>> update value via updateConfig
       "
     `)
-    expect(getFormFields().password.value).toBe('def')
+    expect(getFormFields().password.value).toBe('new_value')
+    expect(getFormFields().name.value).toBe('lucas')
+    expect(getFormFields().name.initialValue).toBe('lucas')
   })
 
   test('update configs other than value or initialValue should not change the field values', () => {
     act(() => {
-      renders.addMark('untouch password via updateConfig')
+      renders.addMark('touch password via updateConfig')
       updateConfig({
-        updateUntouchedValues: true,
+        updateUntouchedWithInitial: true,
         fields: {
           password: {
-            isTouched: false,
+            isTouched: true,
           },
         },
       })
@@ -764,18 +762,18 @@ describe('updateUntouchedValues', () => {
     expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
       "
       ⋅⋅⋅
-      >>> untouch password via updateConfig
+      >>> touch password via updateConfig
 
       ┌─
       ⋅ isDiffFromInitial: ✅
       ⋅ formIsValid: ✅
-      ⋅ password: {value:def, initialValue:abc, isTouched:❌}
-      ⋅ name: {value:Hi, initialValue:Hi, isTouched:❌}
+      ⋅ password: {value:new_value, initialValue:abc, isTouched:✅}
+      ⋅ name: {value:lucas, initialValue:lucas, isTouched:❌}
       └─
       "
     `)
 
-    expect(getFormFields().password.value).toBe('def')
+    expect(getFormFields().password.value).toBe('new_value')
     expect(getFormFields().password.initialValue).toBe('abc')
   })
 })

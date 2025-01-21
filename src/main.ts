@@ -527,7 +527,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       fields,
       updateMode = 'merge',
       formMetadata,
-      updateUntouchedValues,
+      updateUntouchedWithInitial,
     }: {
       fields?: UpdateFormConfig<T>
       formMetadata?: M
@@ -543,7 +543,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       /**
        * If true fields without a new `value` but with a new `initialValue` will update their value if they are untouched
        */
-      updateUntouchedValues?: boolean
+      updateUntouchedWithInitial?: boolean
     }) => {
       formStore.batch(() => {
         if (fields) {
@@ -612,7 +612,12 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 fieldConfig.requiredErrorMsg = newConfig.requiredErrorMsg
               }
 
-              if (Object.hasOwn(newConfig, 'initialValue')) {
+              const hasInitialValueConfig = Object.hasOwn(
+                newConfig,
+                'initialValue',
+              )
+
+              if (hasInitialValueConfig) {
                 fieldConfig.initialValue = newConfig.initialValue
                 fieldState.initialValue = newConfig.initialValue
               }
@@ -627,21 +632,16 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 }
               }
 
-              let valueWasChanged = false
-              if (Object.hasOwn(newConfig, 'value')) {
-                const skipUpdate = updateUntouchedValues && fieldState.isTouched
-
-                if (!skipUpdate) {
-                  valueWasChanged = true
-                  fieldState.value = newConfig.value
-                }
+              const hasValueConfig = Object.hasOwn(newConfig, 'value')
+              if (hasValueConfig) {
+                fieldState.value = newConfig.value
               }
 
               if (
-                !valueWasChanged &&
-                updateUntouchedValues &&
+                updateUntouchedWithInitial &&
+                !hasValueConfig &&
                 !fieldState.isTouched &&
-                Object.hasOwn(newConfig, 'initialValue')
+                hasInitialValueConfig
               ) {
                 fieldState.value = fieldState.initialValue
               }
