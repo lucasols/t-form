@@ -527,8 +527,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       fields,
       updateMode = 'merge',
       formMetadata,
-      updateOnlyUntouchedValues,
-      updateUntouchedValues = updateOnlyUntouchedValues,
+      updateUntouchedValues,
     }: {
       fields?: UpdateFormConfig<T>
       formMetadata?: M
@@ -547,8 +546,6 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
        * - Fields without a new `value` but with a new `initialValue` will update their value if they are untouched
        */
       updateUntouchedValues?: boolean
-      /** @deprecated use updateUntouchedValues instead */
-      updateOnlyUntouchedValues?: boolean
     }) => {
       formStore.batch(() => {
         if (fields) {
