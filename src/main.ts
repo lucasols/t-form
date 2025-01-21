@@ -528,6 +528,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       updateMode = 'merge',
       formMetadata,
       updateOnlyUntouchedValues,
+      updateUntouchedValues = updateOnlyUntouchedValues,
     }: {
       fields?: UpdateFormConfig<T>
       formMetadata?: M
@@ -540,6 +541,13 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
        * - mergeAndRemoveExcessFields: merges the new config with the old one and removes the excess fields
        */
       updateMode?: 'merge' | 'overwriteAll' | 'mergeAndRemoveExcessFields'
+      /**
+       * If true:
+       * - Fields with a new `value` config will only update if they are untouched
+       * - Fields without a new `value` but with a new `initialValue` will update their value if they are untouched
+       */
+      updateUntouchedValues?: boolean
+      /** @deprecated use updateUntouchedValues instead */
       updateOnlyUntouchedValues?: boolean
     }) => {
       formStore.batch(() => {
@@ -626,8 +634,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
               let valueWasChanged = false
               if (Object.hasOwn(newConfig, 'value')) {
-                const skipUpdate =
-                  updateOnlyUntouchedValues && fieldState.isTouched
+                const skipUpdate = updateUntouchedValues && fieldState.isTouched
 
                 if (!skipUpdate) {
                   valueWasChanged = true
@@ -637,8 +644,9 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
 
               if (
                 !valueWasChanged &&
-                updateOnlyUntouchedValues &&
-                !fieldState.isTouched
+                updateUntouchedValues &&
+                !fieldState.isTouched &&
+                Object.hasOwn(newConfig, 'initialValue')
               ) {
                 fieldState.value = fieldState.initialValue
               }
