@@ -338,8 +338,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   type ValueArg<K extends FieldsId> = SetValue<T[K]['initialValue']>
 
   type HandleChangeOptions = {
-    skipTouch?: boolean | string[]
-    touchOnly?: string[]
+    skipTouch?: boolean | FieldsId[]
+    touchOnly?: FieldsId[]
   }
 
   type HandleChange = {
