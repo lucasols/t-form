@@ -1,6 +1,7 @@
-import { renderHook } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 import { useForm } from '../src/main'
+import { asType } from '../src/utils/typing'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
 import { simplifyFieldsState } from './utils/simplifyFieldsState'
@@ -289,4 +290,29 @@ test('handle field not found in handleChange', () => {
   expect(consoleError).toHaveBeenCalledWith(
     'Field with id "notFound" not found',
   )
+})
+
+test('use handleChange with undefined should not be ignored', () => {
+  const { result } = renderHook(() => {
+    const { useFormState, handleChange } = useForm({
+      initialConfig: {
+        name: { initialValue: asType<string | undefined>('John') },
+      },
+    })
+
+    const { formFields } = useFormState()
+
+    return {
+      name: formFields.name,
+      handleChange,
+    }
+  })
+
+  expect(result.current.name.value).toMatchInlineSnapshot(`"John"`)
+
+  act(() => {
+    result.current.handleChange('name', undefined)
+  })
+
+  expect(result.current.name.value).toMatchInlineSnapshot(`undefined`)
 })

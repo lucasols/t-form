@@ -364,10 +364,11 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
           ]
     ) => {
       const firstArg = args[0]
-      let options =
-        typeof args[0] === 'string'
-          ? args[2]
-          : (args[1] as boolean | HandleChangeOptions | undefined)
+      const isSingleUpdate = typeof args[0] === 'string'
+
+      let options = isSingleUpdate
+        ? args[2]
+        : (args[1] as boolean | HandleChangeOptions | undefined)
 
       options = typeof options === 'boolean' ? { skipTouch: options } : options
 
@@ -382,7 +383,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
         const unchangedFields = new Set<string>(Object.keys(draft.fields))
 
         for (const [id, value] of Object.entries(valuesToUpdate)) {
-          if (value === undefined) {
+          if (value === undefined && !isSingleUpdate) {
             continue
           }
 
