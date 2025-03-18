@@ -41,7 +41,7 @@ export function useFormState<T extends FieldsInitialConfig, M>(
     isDiffFromInitial: boolean
     formIsValid: boolean
     /**
-     * @deprecated will be removed in next major version, use `getFieldPropsRC` instead
+     * @deprecated will be removed in next major version, use `fieldProps` instead
      */
     getFieldProps: <F extends keyof T>(
       id: F,
