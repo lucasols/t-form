@@ -38,7 +38,7 @@ export function useLatestValue<T>(value: T) {
   return ref.current
 }
 
-function usePrevious<T>(value: T, initial?: T): T | undefined {
+export function usePrevious<T>(value: T, initial?: T): T | undefined {
   const ref = useRef<T | undefined>(initial)
   useEffect(() => {
     ref.current = value
