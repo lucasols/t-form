@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react'
 import {
   FieldsInitialConfig,
   FieldsState,
@@ -49,7 +50,7 @@ export function useFormState<T extends FieldsInitialConfig, M>(
     }
   }
 
-  return formStore.useSelector((state): UseFormState => {
+  const state = formStore.useSelector((state) => {
     const fieldEntries = objectTypedEntries(state.fields)
 
     const { someFieldIsLoading, formIsValid, isDiffFromInitial } =
@@ -63,17 +64,28 @@ export function useFormState<T extends FieldsInitialConfig, M>(
       someFieldIsLoading,
       formIsValid,
       isDiffFromInitial,
-      getFieldProps: (id) => {
-        const fieldState = state.fields[id]
-
-        return {
-          value: fieldState.value,
-          errors: fieldState.errors,
-          onChange: (value) => {
-            handleChange(id, value)
-          },
-        }
-      },
     }
   })
+
+  const getFieldProps: UseFormState['getFieldProps'] = useCallback(
+    (id) => {
+      const fieldState = state.formFields[id]
+
+      return {
+        value: fieldState.value,
+        errors: fieldState.errors,
+        onChange: (value) => {
+          handleChange(id, value)
+        },
+      }
+    },
+    [handleChange, state.formFields],
+  )
+
+  return useMemo((): UseFormState => {
+    return {
+      ...state,
+      getFieldProps,
+    }
+  }, [getFieldProps, state])
 }
