@@ -112,7 +112,8 @@ export function useFormState<T extends FieldsInitialConfig, M>(
       const prevFieldState = prevFieldProps.current[id]
 
       if (
-        prevFieldState?.prevValue.value === fieldState.value &&
+        prevFieldState &&
+        prevFieldState.prevValue.value === fieldState.value &&
         prevFieldState.prevValue.errors === fieldState.errors &&
         prevFieldState.handleChange === handleChange
       ) {
