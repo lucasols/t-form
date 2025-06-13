@@ -3,7 +3,7 @@ import { deepEqual, Store, useCreateStore } from 't-state'
 import { createFormTypedCtx, FormTypedCtx, useFormState } from './useFormState'
 import { singleOrMultipleToArray } from './utils/arrays'
 import { invariant, isFunction, isObject } from './utils/assertions'
-import { useConst, useLatestValue } from './utils/hooks'
+import { useConst, useLatestValue, useOnChange } from './utils/hooks'
 import { mapObjectToObject, objectTypedEntries } from './utils/object'
 import { SingleOrMultiple } from './utils/typing'
 import { SetValue, unwrapSetterValue } from './utils/unwrapSetterValue'
@@ -109,9 +109,7 @@ type FieldConfig = Omit<
 }
 
 type FormStoreState<T extends FieldsInitialConfig, M = unknown> = {
-  fields: {
-    [K in keyof T]: FieldState<T[K]['initialValue'], T[K]['metadata']>
-  }
+  fields: { [K in keyof T]: FieldState<T[K]['initialValue'], T[K]['metadata']> }
   formError: string | false
   formMetadata: M | undefined
   validationWasForced: number
@@ -164,7 +162,9 @@ export type UpdateFieldConfig<
   initialValue?: T[K]['initialValue']
   required?: boolean
   isTouched?: boolean
+  /** @deprecated use `untouchable` instead */
   isUntouchable?: boolean
+  untouchable?: boolean
   metadata?: T[K]['metadata']
   requiredErrorMsg?: string | false
   checkIfIsEmpty?: (value: T[K]['initialValue']) => boolean
@@ -201,11 +201,9 @@ type AdvancedFormValidation<T extends FieldsInitialConfig> = (methods: {
 }) => void
 
 type ArrayFieldsConfig<T extends FieldsInitialConfig> = {
-  [K in keyof T]?: T[K]['initialValue'] extends (infer U)[]
-    ? {
-        getItemId: (item: U) => string
-      }
-    : never
+  [K in keyof T]?: T[K]['initialValue'] extends (infer U)[] ?
+    { getItemId: (item: U) => string }
+  : never
 }
 
 export function useForm<T extends FieldsInitialConfig, M = undefined>({
@@ -215,6 +213,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   advancedFormValidation,
   arrayFieldsConfig,
   initialFormMetadata,
+  autoUpdate,
 }: {
   initialConfig: T | (() => T)
   derivedConfig?: FieldsDerivedConfig<T, M> | (() => FieldsDerivedConfig<T, M>)
@@ -222,6 +221,11 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   advancedFormValidation?: AdvancedFormValidation<T>
   arrayFieldsConfig?: ArrayFieldsConfig<T> | (() => ArrayFieldsConfig<T>)
   initialFormMetadata?: M | (() => M)
+  /**
+   * When `true` updates untouched fields values to the `initialValue` when
+   * initial config changes.
+   */
+  autoUpdate?: boolean
 }) {
   type FieldsId = keyof T
 
@@ -330,9 +334,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
   )
 
   const formStore: FormStore<T, M> = useCreateStore<InternalFormStoreState>(
-    () => ({
-      state: getInitialState(),
-    }),
+    () => ({ state: getInitialState() }),
   )
 
   type ValueArg<K extends FieldsId> = SetValue<T[K]['initialValue']>
@@ -366,8 +368,9 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       const firstArg = args[0]
       const isSingleUpdate = typeof args[0] === 'string'
 
-      let options = isSingleUpdate
-        ? args[2]
+      let options =
+        isSingleUpdate ?
+          args[2]
         : (args[1] as boolean | HandleChangeOptions | undefined)
 
       options = typeof options === 'boolean' ? { skipTouch: options } : options
@@ -375,9 +378,9 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       const errorWasReset = new Set<string>()
 
       const valuesToUpdate: Partial<Record<K, ValueArg<K>>> =
-        typeof firstArg !== 'object'
-          ? ({ [firstArg]: args[1] } as Record<K, ValueArg<K>>)
-          : firstArg
+        typeof firstArg !== 'object' ?
+          ({ [firstArg]: args[1] } as Record<K, ValueArg<K>>)
+        : firstArg
 
       formStore.produceState((draft) => {
         const unchangedFields = new Set<string>(Object.keys(draft.fields))
@@ -467,9 +470,9 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
             id,
             value,
           ]),
-          isObject(skipTouchOrOptions)
-            ? skipTouchOrOptions
-            : { skipTouch: skipTouchOrOptions },
+          isObject(skipTouchOrOptions) ? skipTouchOrOptions : (
+            { skipTouch: skipTouchOrOptions }
+          ),
         )
       })
     },
@@ -487,10 +490,7 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       setTimeout(() => {
         document
           .querySelector(globalConfig.errorElementSelector)
-          ?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-          })
+          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }, 90)
     },
     [formStore, forceFormUpdate],
@@ -556,10 +556,10 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
               if (!newConfig) continue
 
               if (
-                newConfig !== 'remove' &&
-                (!fieldConfig ||
-                  newConfig.replace ||
-                  updateMode === 'overwriteAll')
+                newConfig !== 'remove'
+                && (!fieldConfig
+                  || newConfig.replace
+                  || updateMode === 'overwriteAll')
               ) {
                 if (!Object.hasOwn(newConfig, 'initialValue')) {
                   globalConfig.handleFormError(
@@ -628,6 +628,10 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
                 fieldConfig.untouchable = newConfig.isUntouchable
               }
 
+              if (newConfig.untouchable !== undefined) {
+                fieldConfig.untouchable = newConfig.untouchable
+              }
+
               if (!fieldConfig.untouchable) {
                 if (newConfig.isTouched !== undefined) {
                   fieldState.isTouched = newConfig.isTouched
@@ -640,10 +644,10 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
               }
 
               if (
-                updateUntouchedWithInitial &&
-                !hasValueConfig &&
-                !fieldState.isTouched &&
-                hasInitialValueConfig
+                updateUntouchedWithInitial
+                && !hasValueConfig
+                && !fieldState.isTouched
+                && hasInitialValueConfig
               ) {
                 fieldState.value = fieldState.initialValue
               }
@@ -684,8 +688,8 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
             }
 
             if (
-              updateMode === 'mergeAndRemoveExcessFields' ||
-              updateMode === 'overwriteAll'
+              updateMode === 'mergeAndRemoveExcessFields'
+              || updateMode === 'overwriteAll'
             ) {
               for (const [id] of objectTypedEntries(draft.fields)) {
                 if (!fields[id]) {
@@ -714,14 +718,10 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
     const mergeCfg: UpdateFormConfig<T> = {}
 
     for (const id of Object.keys(formStore.state.fields)) {
-      mergeCfg[id as keyof T] = {
-        isTouched: false,
-      }
+      mergeCfg[id as keyof T] = { isTouched: false }
     }
 
-    updateConfig({
-      fields: mergeCfg,
-    })
+    updateConfig({ fields: mergeCfg })
   }, [formStore.state.fields, updateConfig])
 
   const arrayFields = useMemo(() => {
@@ -775,11 +775,11 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
       updateItem<K extends ArrayFieldsIds>(
         fieldId: K,
         itemId: string,
-        value: T[K]['initialValue'] extends (infer U)[]
-          ? U extends Record<string, any>
-            ? Partial<U>
-            : U
-          : never,
+        value: T[K]['initialValue'] extends (infer U)[] ?
+          U extends Record<string, any> ?
+            Partial<U>
+          : U
+        : never,
       ) {
         const arrayConfig = formConfig.fieldsMap.get(fieldId)?.arrayConfig
 
@@ -789,16 +789,33 @@ export function useForm<T extends FieldsInitialConfig, M = undefined>({
           const array = currentValue as any[]
 
           return array.map((item) =>
-            arrayConfig.getItemId(item) === itemId
-              ? isObject(value)
-                ? { ...item, ...value }
-                : value
-              : item,
+            arrayConfig.getItemId(item) === itemId ?
+              isObject(value) ? { ...item, ...value }
+              : value
+            : item,
           )
         })
       },
     }
   }, [formConfig, handleChange])
+
+  useOnChange(
+    autoUpdate && fieldsInitialConfig,
+    () => {
+      if (!autoUpdate) return
+
+      invariant(
+        typeof fieldsInitialConfig === 'object',
+        'initialConfig must be an object',
+      )
+
+      updateConfig({
+        updateUntouchedWithInitial: true,
+        fields: fieldsInitialConfig,
+      })
+    },
+    { equalityFn: deepEqual },
+  )
 
   return {
     /** @deprecated use the exported hook `useFormState(formTypedCtx)` instead */
@@ -869,9 +886,8 @@ export function getGenericFormState<T extends FieldsInitialConfig>(
   }
   return {
     someFieldIsLoading,
-    formIsValid: mustBeDiffFromInitial
-      ? formIsValid && isDiffFromInitial
-      : formIsValid,
+    formIsValid:
+      mustBeDiffFromInitial ? formIsValid && isDiffFromInitial : formIsValid,
     isDiffFromInitial,
   }
 }
@@ -893,9 +909,9 @@ function updateFieldStateFromValue(
   }
 
   if (
-    !isInitialState &&
-    draftField.value === normalizedValue &&
-    deepEqual(validationResults, {
+    !isInitialState
+    && draftField.value === normalizedValue
+    && deepEqual(validationResults, {
       errors: draftField.errors,
       isValid: draftField.isValid,
       isEmpty: draftField.isEmpty,
@@ -910,8 +926,9 @@ function updateFieldStateFromValue(
     draftField.initialValue,
   )
   draftField.value = normalizedValue
-  draftField.errors = draftField.isTouched
-    ? keepPrevIfUnchanged(validationResults.errors, draftField.errors)
+  draftField.errors =
+    draftField.isTouched ?
+      keepPrevIfUnchanged(validationResults.errors, draftField.errors)
     : null
   errorWasReset?.add(fieldId)
   draftField.isValid = validationResults.isValid
@@ -922,11 +939,7 @@ function updateFieldStateFromValue(
 function basicFieldValidation(
   fieldConfig: FieldConfig,
   value: unknown,
-): {
-  errors: string[] | null
-  isValid: boolean
-  isEmpty: boolean
-} {
+): { errors: string[] | null; isValid: boolean; isEmpty: boolean } {
   const errors: string[] = []
   let isValid = true
   const isEmpty =
@@ -937,19 +950,15 @@ function basicFieldValidation(
 
     if (fieldConfig.requiredErrorMsg !== false) {
       errors.push(
-        fieldConfig.requiredErrorMsg ||
-          (typeof globalConfig.defaultRequiredMsg === 'string'
-            ? globalConfig.defaultRequiredMsg
-            : globalConfig.defaultRequiredMsg()),
+        fieldConfig.requiredErrorMsg
+          || (typeof globalConfig.defaultRequiredMsg === 'string' ?
+            globalConfig.defaultRequiredMsg
+          : globalConfig.defaultRequiredMsg()),
       )
     }
   }
 
-  return {
-    errors: errors.length !== 0 ? errors : null,
-    isValid,
-    isEmpty,
-  }
+  return { errors: errors.length !== 0 ? errors : null, isValid, isEmpty }
 }
 
 function updateDerivedConfig(
@@ -988,8 +997,8 @@ function updateDerivedConfig(
       )
 
       if (
-        !deepEqual(validationResults.errors, fieldState.errors) &&
-        fieldState.isTouched
+        !deepEqual(validationResults.errors, fieldState.errors)
+        && fieldState.isTouched
       ) {
         fieldState.errors = validationResults.errors
       }
@@ -1018,8 +1027,9 @@ function performFormValidation(
       }
 
       if (!errorWasReset.has(id)) {
-        fieldState.errors = fieldState.errors
-          ? keepPrevIfUnchanged(
+        fieldState.errors =
+          fieldState.errors ?
+            keepPrevIfUnchanged(
               basicFieldValidation(fieldConfig, fieldState.value).errors,
               fieldState.errors,
             )
@@ -1204,19 +1214,20 @@ export function getFieldConfig<V, M = undefined>({
 }
 
 export function normalizeFormValue(value: unknown) {
-  return typeof value === 'string'
-    ? value.trim()
-    : Array.isArray(value)
-      ? value.filter((item) => item !== undefined && item !== null)
-      : value
+  return (
+    typeof value === 'string' ? value.trim()
+    : Array.isArray(value) ?
+      value.filter((item) => item !== undefined && item !== null)
+    : value
+  )
 }
 
 export function valueIsEmpty(value: unknown) {
-  return Array.isArray(value)
-    ? value.length === 0
-    : typeof value === 'string'
-      ? value.trim() === ''
-      : value === undefined || value === null
+  return (
+    Array.isArray(value) ? value.length === 0
+    : typeof value === 'string' ? value.trim() === ''
+    : value === undefined || value === null
+  )
 }
 
 type FormConfigFromValues<T extends Record<string, any>> = {
@@ -1255,9 +1266,7 @@ export function useFormWithPreTypedValues<
   initialFormMetadata,
 }: {
   initialConfig: NoInfer<
-    GetterOrValue<{
-      [K in keyof T]: PreTypedValuesFieldConfig<T, K, FM>
-    }>
+    GetterOrValue<{ [K in keyof T]: PreTypedValuesFieldConfig<T, K, FM> }>
   >
   advancedFormValidation?: AdvancedFormValidation<T>
   initialFormMetadata?: FM | (() => FM)
@@ -1274,17 +1283,15 @@ export function useFormWithPreTypedValues<
     for (const [id, fieldConfig] of objectTypedEntries(fieldsConfig)) {
       config[id as keyof Config] = {
         initialValue: fieldConfig.initialValue,
-        required: isFunction(fieldConfig.required)
-          ? undefined
-          : fieldConfig.required,
+        required:
+          isFunction(fieldConfig.required) ? undefined : fieldConfig.required,
         requiredErrorMsg: fieldConfig.requiredErrorMsg,
       }
 
       derivedConfig[id as keyof Config] = {
         checkIfIsEmpty: fieldConfig.checkIfIsEmpty,
-        required: isFunction(fieldConfig.required)
-          ? fieldConfig.required
-          : undefined,
+        required:
+          isFunction(fieldConfig.required) ? fieldConfig.required : undefined,
         resetIfDerivedRequiredChangeToFalse:
           fieldConfig.resetIfDerivedRequiredChangeToFalse,
       }
@@ -1292,11 +1299,7 @@ export function useFormWithPreTypedValues<
       fieldIsValid[id as keyof Config] = fieldConfig.isValid
     }
 
-    return {
-      initialConfig: config,
-      derivedConfig,
-      fieldIsValid,
-    }
+    return { initialConfig: config, derivedConfig, fieldIsValid }
   })
 
   return useForm<Config, FM>({

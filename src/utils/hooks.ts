@@ -1,7 +1,8 @@
+import { deepEqual } from '@ls-stack/utils/deepEqual'
+import { shallowEqual } from '@ls-stack/utils/shallowEqual'
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { deepEqual, shallowEqual } from 't-state'
 
-function useDeepCompareMemoize(value: any, equalityFn = deepEqual) {
+function useDeepCompareMemoize(value: any, equalityFn = deepEqual): [number] {
   const ref = useRef<any>()
   const signalRef = useRef<number>(0)
 

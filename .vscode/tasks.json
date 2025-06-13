@@ -6,14 +6,14 @@
     {
       "label": "run tests",
       "type": "npm",
-      "script": "test"
+      "script": "test:ui"
     },
     {
       "label": "bump version and deploy",
       "type": "shell",
       "command": "pnpm pre-publish && pnpm version ${input:version} && pnpm publish",
       "problemMatcher": []
-    },
+    }
   ],
   "inputs": [
     {
