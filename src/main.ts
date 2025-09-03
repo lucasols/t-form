@@ -209,6 +209,30 @@ type ArrayFieldsConfig<T extends AnyInitialConfig> = {
   : never
 }
 
+export type HandleChangeOptions<T extends AnyInitialConfig> = {
+  skipTouch?: boolean | (keyof T)[]
+  touchOnly?: (keyof T)[]
+}
+
+type ValueArg<T extends AnyInitialConfig, K extends keyof T> = SetValue<
+  T[K]['initialValue']
+>
+
+export type FormHandleChange<T extends AnyInitialConfig> = {
+  <K extends keyof T>(
+    id: K,
+    value: ValueArg<T, K>,
+    options?: HandleChangeOptions<T> | boolean,
+  ): void
+  (
+    fields: { [P in keyof T]?: ValueArg<T, P> },
+    options?: HandleChangeOptions<T> | boolean,
+  ): void
+}
+
+export type FormCfgFromStore<T extends FormStore<any, any>> =
+  T extends FormStore<infer U, any> ? U : never
+
 export function useForm<T extends AnyInitialConfig, M = undefined>({
   initialConfig: fieldsInitialConfig,
   derivedConfig: fieldsDerivedConfig,
@@ -340,32 +364,19 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
     () => ({ state: getInitialState() }),
   )
 
-  type ValueArg<K extends FieldsId> = SetValue<T[K]['initialValue']>
-
-  type HandleChangeOptions = {
-    skipTouch?: boolean | FieldsId[]
-    touchOnly?: FieldsId[]
-  }
-
-  type HandleChange = {
-    <K extends FieldsId>(
-      id: K,
-      value: ValueArg<K>,
-      options?: HandleChangeOptions | boolean,
-    ): void
-    (
-      fields: { [P in keyof T]?: ValueArg<P> },
-      options?: HandleChangeOptions | boolean,
-    ): void
-  }
+  type HandleChange = FormHandleChange<T>
 
   const handleChange = useCallback<HandleChange>(
     <K extends FieldsId>(
       ...args:
-        | [id: K, value: ValueArg<K>, skipTouch?: HandleChangeOptions | boolean]
         | [
-            fields: { [P in FieldsId]?: ValueArg<P> },
-            skipTouch?: HandleChangeOptions | boolean,
+            id: K,
+            value: ValueArg<T, K>,
+            skipTouch?: HandleChangeOptions<T> | boolean,
+          ]
+        | [
+            fields: { [P in FieldsId]?: ValueArg<T, P> },
+            skipTouch?: HandleChangeOptions<T> | boolean,
           ]
     ) => {
       const firstArg = args[0]
@@ -374,15 +385,15 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
       let options =
         isSingleUpdate ?
           args[2]
-        : (args[1] as boolean | HandleChangeOptions | undefined)
+        : (args[1] as boolean | HandleChangeOptions<T> | undefined)
 
       options = typeof options === 'boolean' ? { skipTouch: options } : options
 
       const errorWasReset = new Set<string>()
 
-      const valuesToUpdate: Partial<Record<K, ValueArg<K>>> =
+      const valuesToUpdate: Partial<Record<K, ValueArg<T, K>>> =
         typeof firstArg !== 'object' ?
-          ({ [firstArg]: args[1] } as Record<K, ValueArg<K>>)
+          ({ [firstArg]: args[1] } as Record<K, ValueArg<T, K>>)
         : firstArg
 
       formStore.produceState((draft) => {
@@ -466,7 +477,7 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
   )
 
   const forceFormUpdate = useCallback(
-    (skipTouchOrOptions: boolean | string[] | HandleChangeOptions) => {
+    (skipTouchOrOptions: boolean | string[] | HandleChangeOptions<T>) => {
       formStore.batch(() => {
         handleChange(
           mapObjectToObject(formStore.state.fields, (id, { value }) => [
@@ -483,7 +494,7 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
   )
 
   const forceFormValidation = useCallback(
-    (options?: HandleChangeOptions) => {
+    (options?: HandleChangeOptions<T>) => {
       formStore.batch(() => {
         formStore.setKey('validationWasForced', (v) => v + 1)
 
