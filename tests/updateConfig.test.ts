@@ -9,25 +9,20 @@ import { simplifyFieldsState } from './utils/simplifyFieldsState'
 test('update a field config', () => {
   const renders = createLoggerStore()
 
-  const updateConfigAction = emulateAction<
-    Parameters<
-      ReturnType<
-        typeof useForm<{
-          password: {
-            initialValue: string
-          }
-        }>
-      >['updateConfig']
-    >
-  >()
+  const updateConfigAction =
+    emulateAction<
+      Parameters<
+        ReturnType<
+          typeof useForm<{ password: { initialValue: string } }>
+        >['updateConfig']
+      >
+    >()
 
   const setPassword = emulateAction<string>()
 
   renderHook(() => {
     const { useFormState, updateConfig, handleChange } = useForm({
-      initialConfig: {
-        password: { initialValue: '' },
-      },
+      initialConfig: { password: { initialValue: '' } },
       fieldIsValid: {
         password: ({ value }) => (value === 'wrong' ? 'Wrong password' : true),
       },
@@ -130,13 +125,7 @@ test('update a field config', () => {
   `)
 
   updateConfigAction.call([
-    {
-      fields: {
-        password: {
-          checkIfIsEmpty: (value) => value === '12345',
-        },
-      },
-    },
+    { fields: { password: { checkIfIsEmpty: (value) => value === '12345' } } },
   ])
 
   expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
@@ -244,11 +233,7 @@ test('add field', () => {
   renderHook(() => {
     const { useFormState, updateConfig } = useForm<
       DynamicFormInitialConfig<string>
-    >({
-      initialConfig: {
-        password: { initialValue: '' },
-      },
-    })
+    >({ initialConfig: { password: { initialValue: '' } } })
 
     const { formFields, isDiffFromInitial, formIsValid } = useFormState()
 
@@ -334,7 +319,7 @@ test('override some fields', () => {
 
   renderHook(() => {
     const { useFormState, updateConfig } = useForm<
-      DynamicFormInitialConfig<string>
+      DynamicFormInitialConfig<string, { foo: string } | undefined>
     >({
       initialConfig: {
         password: {
@@ -356,9 +341,7 @@ test('override some fields', () => {
 
     overrideSomeFields.useOnAction(() => {
       updateConfig({
-        fields: {
-          password: { initialValue: '12345', replace: true },
-        },
+        fields: { password: { initialValue: '12345', replace: true } },
       })
     })
   })
@@ -390,7 +373,7 @@ test('override all', () => {
 
   renderHook(() => {
     const { useFormState, updateConfig } = useForm<
-      DynamicFormInitialConfig<string>
+      DynamicFormInitialConfig<string, { foo: string } | undefined>
     >({
       initialConfig: {
         password: {
@@ -451,11 +434,7 @@ test('update form metadata', () => {
   renderHook(() => {
     const { useFormState, formStore, updateConfig } = useForm({
       initialFormMetadata: 'invalid' as Metadata,
-      initialConfig: {
-        password: {
-          initialValue: '',
-        },
-      },
+      initialConfig: { password: { initialValue: '' } },
       fieldIsValid: {
         password: ({ formMetadata }) => {
           if (formMetadata === 'invalid') {
@@ -525,11 +504,7 @@ test('update initialValue should update isDiffFromInitial', () => {
 
   renderHook(() => {
     const { useFormState, updateConfig, handleChange } = useForm({
-      initialConfig: {
-        password: {
-          initialValue: '',
-        },
-      },
+      initialConfig: { password: { initialValue: '' } },
     })
 
     const { formFields, isDiffFromInitial, formIsValid } = useFormState({
@@ -543,13 +518,7 @@ test('update initialValue should update isDiffFromInitial', () => {
     })
 
     updateInitialValue.useOnAction(() => {
-      updateConfig({
-        fields: {
-          password: {
-            initialValue: '12345',
-          },
-        },
-      })
+      updateConfig({ fields: { password: { initialValue: '12345' } } })
     })
 
     setPassword.useOnAction((password) => {
@@ -645,12 +614,8 @@ describe('updateUntouchedWithInitial', () => {
       updateConfig({
         updateUntouchedWithInitial: true,
         fields: {
-          password: {
-            initialValue: '6789',
-          },
-          name: {
-            initialValue: 'John',
-          },
+          password: { initialValue: '6789' },
+          name: { initialValue: 'John' },
         },
       })
     })
@@ -677,12 +642,8 @@ describe('updateUntouchedWithInitial', () => {
       updateConfig({
         updateUntouchedWithInitial: true,
         fields: {
-          password: {
-            initialValue: 'abc',
-          },
-          name: {
-            initialValue: 'Hi',
-          },
+          password: { initialValue: 'abc' },
+          name: { initialValue: 'Hi' },
         },
       })
     })
@@ -717,13 +678,8 @@ describe('updateUntouchedWithInitial', () => {
       updateConfig({
         updateUntouchedWithInitial: true,
         fields: {
-          password: {
-            value: 'new_value',
-            initialValue: 'abc',
-          },
-          name: {
-            initialValue: 'lucas',
-          },
+          password: { value: 'new_value', initialValue: 'abc' },
+          name: { initialValue: 'lucas' },
         },
       })
     })
@@ -751,11 +707,7 @@ describe('updateUntouchedWithInitial', () => {
       renders.addMark('touch password via updateConfig')
       updateConfig({
         updateUntouchedWithInitial: true,
-        fields: {
-          password: {
-            isTouched: true,
-          },
-        },
+        fields: { password: { isTouched: true } },
       })
     })
 
