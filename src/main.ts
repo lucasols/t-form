@@ -16,6 +16,8 @@ import {
 
 export { useFormState } from './useFormState'
 
+export { getChangedFormValuesObj, getFormValuesObj } from './stateUtils'
+
 type GlobalConfig = {
   defaultRequiredMsg: string | (() => string)
   errorElementSelector: string
