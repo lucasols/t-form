@@ -5,6 +5,7 @@ import { singleOrMultipleToArray } from './utils/arrays'
 import { invariant, isFunction, isObject } from './utils/assertions'
 import { useConst, useLatestValue, useOnChange } from './utils/hooks'
 import { mapObjectToObject, objectTypedEntries } from './utils/object'
+import type { AnyInitialConfig } from './utils/type'
 import { SingleOrMultiple } from './utils/typing'
 import { SetValue, unwrapSetterValue } from './utils/unwrapSetterValue'
 import {
@@ -40,10 +41,9 @@ export type FieldSimplifiedValidation<V, M = unknown> = SingleOrMultiple<
   }) => true | string | string[] | SilentInvalid | SilentInvalidIfNotTouched
 >
 
-type FieldInitialConfig<T = unknown, M = unknown> = {
+export type FieldInitialConfig<T = unknown, M = unknown> = {
   initialValue: T
   required?: boolean
-  metadata?: M
   requiredErrorMsg?: string | false
   untouchable?: boolean
   advancedCustomValue?: T
@@ -53,7 +53,7 @@ type FieldInitialConfig<T = unknown, M = unknown> = {
   _isEmpty?: (value: any) => boolean
   /** @internal */
   _isLoading?: (value: any) => boolean
-}
+} & (M extends undefined ? { metadata?: M } : { metadata: M })
 
 type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
   checkIfIsEmpty?: (value: T) => boolean
@@ -108,7 +108,7 @@ type FieldConfig = Omit<
     | undefined
 }
 
-type FormStoreState<T extends FieldsInitialConfig, M = unknown> = {
+type FormStoreState<T extends AnyInitialConfig, M = unknown> = {
   fields: { [K in keyof T]: FieldState<T[K]['initialValue'], T[K]['metadata']> }
   formError: string | false
   formMetadata: M | undefined
@@ -130,15 +130,15 @@ export type FieldState<V, M> = {
   valueIsLoading: boolean
 }
 
-export type FieldsState<T extends FieldsInitialConfig> = {
+export type FieldsState<T extends AnyInitialConfig> = {
   [P in keyof T]: FieldState<T[P]['initialValue'], T[P]['metadata']>
 }
 
-type FieldsDerivedConfig<T extends FieldsInitialConfig, FM> = {
+type FieldsDerivedConfig<T extends AnyInitialConfig, FM> = {
   [K in keyof T]?: FieldDerivedConfig<T[K]['initialValue'], FieldsState<T>, FM>
 }
 
-type FieldsValidation<T extends FieldsInitialConfig, FM> = {
+type FieldsValidation<T extends AnyInitialConfig, FM> = {
   [K in keyof T]?: FieldValidation<
     T[K]['initialValue'],
     T[K]['metadata'],
@@ -148,12 +148,13 @@ type FieldsValidation<T extends FieldsInitialConfig, FM> = {
   >
 }
 
-export type FormStore<T extends FieldsInitialConfig, FM = undefined> = Store<
-  FormStoreState<T, FM>
->
+export type FormStore<
+  T extends Record<string, FieldInitialConfig<any, any>>,
+  FM = undefined,
+> = Store<FormStoreState<T, FM>>
 
 export type UpdateFieldConfig<
-  T extends FieldsInitialConfig,
+  T extends Record<string, FieldInitialConfig<any, any>>,
   K extends keyof T,
   FM = undefined,
 > = {
@@ -186,27 +187,29 @@ export type UpdateFieldConfig<
   >
 }
 
-export type UpdateFormConfig<T extends FieldsInitialConfig> = {
+export type UpdateFormConfig<T extends AnyInitialConfig> = {
   [K in keyof T]?: UpdateFieldConfig<T, K> | 'remove'
 }
 
-export type DynamicFormInitialConfig<V = unknown, M = unknown> = Record<
+export type DynamicFormInitialConfig<V = unknown, M = undefined> = Record<
   string,
   FieldInitialConfig<V, M>
 >
 
-type AdvancedFormValidation<T extends FieldsInitialConfig> = (methods: {
+type AdvancedFormValidation<
+  T extends Record<string, FieldInitialConfig<any, any>>,
+> = (methods: {
   fieldsState: FieldsState<T>
   setFormError: (error: string) => void
 }) => void
 
-type ArrayFieldsConfig<T extends FieldsInitialConfig> = {
+type ArrayFieldsConfig<T extends AnyInitialConfig> = {
   [K in keyof T]?: T[K]['initialValue'] extends (infer U)[] ?
     { getItemId: (item: U) => string }
   : never
 }
 
-export function useForm<T extends FieldsInitialConfig, M = undefined>({
+export function useForm<T extends AnyInitialConfig, M = undefined>({
   initialConfig: fieldsInitialConfig,
   derivedConfig: fieldsDerivedConfig,
   fieldIsValid: validations,
@@ -862,7 +865,7 @@ function getInitialStateFromConfig<T extends FieldsInitialConfig>(
   }
 }
 
-export function getGenericFormState<T extends FieldsInitialConfig>(
+export function getGenericFormState<T extends AnyInitialConfig>(
   state: FormStoreState<T>,
   fieldEntries: [any, FieldState<any, any>][],
   mustBeDiffFromInitial: boolean,
@@ -1113,7 +1116,11 @@ function performFormValidation(
 
 export type DynamicFormConfig<V, M = undefined, FM = undefined> = Record<
   string,
-  UpdateFieldConfig<DynamicFormInitialConfig<V, M>, string, FM>
+  Omit<
+    UpdateFieldConfig<DynamicFormInitialConfig<V, M>, string, FM>,
+    'metadata'
+  >
+    & (M extends undefined ? { metadata?: M | undefined } : { metadata: M })
 >
 
 export type DynamicFormStore<
@@ -1122,6 +1129,20 @@ export type DynamicFormStore<
   FormMetadata = undefined,
 > = FormStore<DynamicFormInitialConfig<Value, FieldMetadata>, FormMetadata>
 
+/**
+ * useDynamicForm is a hook for creating dynamic forms with runtime-defined fields.
+ *
+ * @template V - The value type for all fields.
+ * @template M - The metadata type for each field (optional).
+ * @template FM - The metadata type for the form as a whole (optional).
+ *
+ * @param {Object} params
+ * @param {() => DynamicFormConfig<V, M, FM>} params.getInitialConfig - Function returning the dynamic form configuration.
+ * @param {AdvancedFormValidation<DynamicFormInitialConfig<V, M>>} [params.advancedFormValidation] - Optional advanced form validation function.
+ *
+ * The hook builds the form configuration, derived config, and validation config
+ * from the provided dynamic config, and passes them to useForm.
+ */
 export function useDynamicForm<V, M = undefined, FM = undefined>({
   getInitialConfig,
   advancedFormValidation,
@@ -1156,8 +1177,8 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
         initialValue: fieldConfig.initialValue as V,
         required: fieldConfig.required ?? false,
         requiredErrorMsg: fieldConfig.requiredErrorMsg,
-        metadata: fieldConfig.metadata,
-      }
+        metadata: fieldConfig.metadata as any,
+      } as any
 
       derivedConfig[id] = {
         checkIfIsEmpty: fieldConfig.checkIfIsEmpty,
@@ -1210,7 +1231,7 @@ export function getFieldConfig<V, M = undefined>({
     _isEmpty: checkIfIsEmpty,
     untouchable,
     _isLoading: isLoading,
-  }
+  } as unknown as FieldInitialConfig<V, M>
 }
 
 export function normalizeFormValue(value: unknown) {
@@ -1286,6 +1307,7 @@ export function useFormWithPreTypedValues<
         required:
           isFunction(fieldConfig.required) ? undefined : fieldConfig.required,
         requiredErrorMsg: fieldConfig.requiredErrorMsg,
+        metadata: undefined,
       }
 
       derivedConfig[id as keyof Config] = {

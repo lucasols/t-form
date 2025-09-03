@@ -1,28 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import {
-  FieldsInitialConfig,
-  FieldsState,
-  FieldState,
-  FormStore,
-  getGenericFormState,
-} from './main'
+import { FieldsState, FieldState, FormStore, getGenericFormState } from './main'
 import { objectTypedEntries } from './utils/object'
+import type { AnyInitialConfig } from './utils/type'
 const formStoreSymbol = Symbol('formStore')
 const handleChangeSymbol = Symbol('handleChange')
 
-export type FormTypedCtx<T extends FieldsInitialConfig, M> = {
+export type FormTypedCtx<T extends AnyInitialConfig, M> = {
   [formStoreSymbol]: FormStore<T, M>
   [handleChangeSymbol]: (id: keyof T, value: any, options?: any) => void
 }
 
-export function createFormTypedCtx<T extends FieldsInitialConfig, M>(
+export function createFormTypedCtx<T extends AnyInitialConfig, M>(
   formStore: FormStore<T, M>,
   handleChange: (id: keyof T, value: any, options?: any) => void,
 ) {
   return { [formStoreSymbol]: formStore, [handleChangeSymbol]: handleChange }
 }
 
-export function useFormState<T extends FieldsInitialConfig, M>(
+export function useFormState<T extends AnyInitialConfig, M>(
   typedCtx: FormTypedCtx<T, M>,
   { mustBeDiffFromInitial = false }: { mustBeDiffFromInitial?: boolean } = {},
 ) {
@@ -112,10 +107,10 @@ export function useFormState<T extends FieldsInitialConfig, M>(
       const prevFieldState = prevFieldProps.current[id]
 
       if (
-        prevFieldState &&
-        prevFieldState.prevValue.value === fieldState.value &&
-        prevFieldState.prevValue.errors === fieldState.errors &&
-        prevFieldState.handleChange === handleChange
+        prevFieldState
+        && prevFieldState.prevValue.value === fieldState.value
+        && prevFieldState.prevValue.errors === fieldState.errors
+        && prevFieldState.handleChange === handleChange
       ) {
         fieldProps[id] = prevFieldState.prevValue
         continue
@@ -135,18 +130,11 @@ export function useFormState<T extends FieldsInitialConfig, M>(
 
   useEffect(() => {
     for (const [id, fieldState] of objectTypedEntries(fieldProps)) {
-      prevFieldProps.current[id] = {
-        handleChange,
-        prevValue: fieldState,
-      }
+      prevFieldProps.current[id] = { handleChange, prevValue: fieldState }
     }
   }, [fieldProps, handleChange])
 
   return useMemo((): UseFormState => {
-    return {
-      ...state,
-      getFieldProps,
-      fieldProps,
-    }
+    return { ...state, getFieldProps, fieldProps }
   }, [getFieldProps, fieldProps, state])
 }

@@ -1,7 +1,16 @@
 import { FieldState } from '../../src/main'
 import { pick } from '../../src/utils/object'
 
-export function simplifyFieldState(fieldState: FieldState<any, any>) {
+export function simplifyFieldState(
+  fieldState: FieldState<any, any> | undefined,
+  filterKeys?: (keyof FieldState<any, any>)[],
+) {
+  if (!fieldState) return null
+
+  if (filterKeys) {
+    return pick(fieldState, filterKeys)
+  }
+
   return {
     val: fieldState.value,
     initV: fieldState.initialValue,
