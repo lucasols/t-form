@@ -677,24 +677,27 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
               }
 
               if (newConfig.checkIfIsEmpty !== undefined) {
-                fieldConfig.derived = {
-                  ...fieldConfig.derived,
-                  checkIfIsEmpty: newConfig.checkIfIsEmpty,
+                if (!fieldConfig.derived) {
+                  fieldConfig.derived = {}
                 }
+
+                fieldConfig.derived.checkIfIsEmpty = newConfig.checkIfIsEmpty
               }
 
               if (newConfig.derivedRequired !== undefined) {
-                fieldConfig.derived = {
-                  ...fieldConfig.derived,
-                  required: newConfig.derivedRequired,
+                if (!fieldConfig.derived) {
+                  fieldConfig.derived = {}
                 }
+
+                fieldConfig.derived.required = newConfig.derivedRequired
               }
 
               if (newConfig.isLoading !== undefined) {
-                fieldConfig.derived = {
-                  ...fieldConfig.derived,
-                  isLoading: newConfig.isLoading,
+                if (!fieldConfig.derived) {
+                  fieldConfig.derived = {}
                 }
+
+                fieldConfig.derived.isLoading = newConfig.isLoading
               }
 
               if (newConfig.metadata !== undefined) {
