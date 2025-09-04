@@ -12,8 +12,8 @@ importers:
         specifier: ^10.1.1
         version: 10.1.1
       t-state:
-        specifier: ^9.4.0
-        version: 9.4.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        specifier: ^9.7.1
+        version: 9.7.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
     devDependencies:
       '@eslint/js':
         specifier: ^9.34.0
@@ -1724,8 +1724,8 @@ packages:
     resolution: {integrity: sha512-i8+5uNuxj9xV1SGBM10mRVc8zPmFYwqLoBpuHWtM16uelDy6Iox0lM2Ns+ZN76GGwYUF1bz5fKMOlqeiM6qVCQ==}
     engines: {node: '>=23.0.0'}
 
-  t-state@9.4.0:
-    resolution: {integrity: sha512-Iw2MzAnzOIC2F70aYpCgVn4z11+rFpmqGB4IFtGjW5v5TP0hUWfv4Oyr1JG/aNcE1imCyZZ6MVH70r5Tbi4Bfg==}
+  t-state@9.7.1:
+    resolution: {integrity: sha512-0SAj5IZ8pHvtZzDEPd0vKGsRRmqKuWvQbX3TqngFUrISVJrw/5JYSgbFijafyjecaw6w8c3FKvf+259jJXZnqQ==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       react: ^18.0.0
@@ -3449,7 +3449,7 @@ snapshots:
 
   t-result@0.3.0: {}
 
-  t-state@9.4.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
+  t-state@9.7.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
       immer: 10.1.1
       nanoid: 5.0.6
