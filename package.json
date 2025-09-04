@@ -12,7 +12,7 @@
     "eslint": "CI=true eslint src/ tests/ --color",
     "eslint:fix": "pnpm eslint --fix",
     "build": "pnpm test && pnpm lint && pnpm build:no-test",
-    "build:no-test": "tsup --minify --dts",
+    "build:no-test": "tsup --dts",
     "build-test": "tsup --config tsup.test.config.ts",
     "pre-publish": "./scripts/check-if-is-sync.sh && pnpm build "
   },
