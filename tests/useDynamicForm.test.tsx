@@ -4,10 +4,15 @@ import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, expect, test } from 'vitest'
 import {
   useDynamicForm,
+  useForm,
   useFormState,
   type DynamicFormConfig,
+  type DynamicFormInitialConfig,
 } from '../src/main'
-import { simplifyFieldState } from './utils/simplifyFieldsState'
+import {
+  simplifyFieldsState,
+  simplifyFieldState,
+} from './utils/simplifyFieldsState'
 
 afterEach(() => cleanup())
 
@@ -122,6 +127,48 @@ test('with field metadata', () => {
     ⋅ #1: {value:jo, metadata:{minNameLength:1}, isValid:✅, errors:null}
     ⋅ #2: {value:jane, metadata:{minNameLength:8}, isValid:❌, errors:[Name must be at least 3 characters]}
     └─
+    "
+  `)
+})
+
+test('merge and remove excess fields should handle added fields', () => {
+  const renders = createLoggerStore()
+
+  const { result } = renderHook(() => {
+    const { formTypedCtx, updateConfig } = useForm<
+      DynamicFormInitialConfig<string>
+    >({ initialConfig: { test: { initialValue: '' } } })
+
+    const { formFields, formIsValid } = useFormState(formTypedCtx)
+
+    renders.add({
+      ...simplifyFieldsState(formFields, ['value', 'isValid']),
+      formIsValid,
+    })
+
+    return { updateConfig }
+  })
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    -> test: {value:'', isValid:✅} ⋅ formIsValid: ✅
+    "
+  `)
+
+  act(() => {
+    result.current.updateConfig({
+      updateMode: 'mergeAndRemoveExcessFields',
+      fields: {
+        test: { initialValue: 'test' },
+        newField: { initialValue: '', required: true },
+      },
+    })
+  })
+
+  expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+    "
+    ⋅⋅⋅
+    -> test: {value:'', isValid:✅} ⋅ newField: {value:'', isValid:❌} ⋅ formIsValid: ❌
     "
   `)
 })
