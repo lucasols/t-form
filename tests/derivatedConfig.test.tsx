@@ -202,7 +202,7 @@ test('derivated config based on field own value', () => {
   expect(renders.snapshot).toMatchInlineSnapshot(`
     "
     arrayOrNull: {val:null, initV:null, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
-    arrayOrNull: {val:[], initV:null, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:Y, isL:N}
+    arrayOrNull: {val:[], initV:null, req:Y, errors:[This field is required], isValid:N, isEmpty:Y, isTouched:Y, isDiff:N, isL:N}
     arrayOrNull: {val:[ok], initV:null, req:Y, errors:null, isValid:Y, isEmpty:N, isTouched:Y, isDiff:Y, isL:N}
     arrayOrNull: {val:null, initV:null, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:Y, isDiff:N, isL:N}
     "

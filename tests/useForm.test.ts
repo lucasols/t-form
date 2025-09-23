@@ -388,7 +388,7 @@ describe('check if is empty', () => {
       result.current.handleChange('name', [])
     })
 
-    expect(result.current.formFields.name.value).toBe([])
+    expect(result.current.formFields.name.value).toStrictEqual([])
     expect(result.current.formFields.name.isDiffFromInitial).toBe(false)
   })
 })

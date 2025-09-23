@@ -940,10 +940,19 @@ function updateFieldStateFromValue(
     return
   }
 
-  draftField.isDiffFromInitial = !deepEqual(
-    normalizedValue,
-    draftField.initialValue,
-  )
+  const initialValueIsEmpty =
+    fieldConfig.derived?.checkIfIsEmpty?.(draftField.initialValue)
+    ?? valueIsEmpty(draftField.initialValue)
+  const bothValuesAreEmpty = validationResults.isEmpty && initialValueIsEmpty
+
+  if (bothValuesAreEmpty) {
+    draftField.isDiffFromInitial = false
+  } else {
+    draftField.isDiffFromInitial = !deepEqual(
+      normalizedValue,
+      draftField.initialValue,
+    )
+  }
   draftField.value = normalizedValue
   draftField.errors =
     draftField.isTouched ?
