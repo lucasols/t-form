@@ -919,7 +919,7 @@ function updateFieldStateFromValue(
   draftField: FieldState<unknown, unknown>,
   isInitialState: boolean,
 ) {
-  const normalizedValue = normalizeFormValue(newValue)
+  const normalizedValue = newValue
 
   const validationResults = basicFieldValidation(fieldConfig, normalizedValue)
 
@@ -1248,15 +1248,6 @@ export function getFieldConfig<V, M = undefined>({
     untouchable,
     _isLoading: isLoading,
   } as unknown as FieldInitialConfig<V, M>
-}
-
-export function normalizeFormValue(value: unknown) {
-  return (
-    typeof value === 'string' ? value.trim()
-    : Array.isArray(value) ?
-      value.filter((item) => item !== undefined && item !== null)
-    : value
-  )
 }
 
 export function valueIsEmpty(value: unknown) {

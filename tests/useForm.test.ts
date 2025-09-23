@@ -328,12 +328,12 @@ describe('check if is empty', () => {
       "
       ┌─
       ⎢ string: {value:, isEmpty:true}
-      ⎢ string2: {value:, isEmpty:true}
+      ⎢ string2: {value:  , isEmpty:true}
       ⎢ number: {value:0, isEmpty:false}
       ⎢ boolean: {value:false, isEmpty:false}
       ⎢ array: {value:[], isEmpty:true}
-      ⎢ arrayWithUndefined: {value:[], isEmpty:true}
-      ⎢ arrayWithNull: {value:[], isEmpty:true}
+      ⎢ arrayWithUndefined: {value:[null], isEmpty:false}
+      ⎢ arrayWithNull: {value:[null], isEmpty:false}
       └─
       "
     `)
