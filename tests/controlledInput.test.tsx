@@ -1,5 +1,4 @@
-import { renderHook } from '@testing-library/react'
-import { act } from 'react'
+import { act, renderHook } from '@testing-library/react'
 import { expect, test } from 'vitest'
 import { useForm } from '../src/main'
 import { useFormState } from '../src/useFormState'
