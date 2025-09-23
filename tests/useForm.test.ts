@@ -364,7 +364,9 @@ describe('check if is empty', () => {
   test('empty fields should not be considered changed if value keep being empty', () => {
     const { result } = renderHook(() => {
       const { formTypedCtx: formTypedProps, handleChange } = useForm({
-        initialConfig: { name: { initialValue: '' as string | null } },
+        initialConfig: {
+          name: { initialValue: '' as string | null | unknown[] },
+        },
       })
 
       const { formFields } = useFormState(formTypedProps)
@@ -380,6 +382,13 @@ describe('check if is empty', () => {
     })
 
     expect(result.current.formFields.name.value).toBe(null)
+    expect(result.current.formFields.name.isDiffFromInitial).toBe(false)
+
+    act(() => {
+      result.current.handleChange('name', [])
+    })
+
+    expect(result.current.formFields.name.value).toBe([])
     expect(result.current.formFields.name.isDiffFromInitial).toBe(false)
   })
 })
