@@ -1,4 +1,4 @@
-import { cleanup, renderHook } from '@testing-library/react'
+import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { useForm, useFormState } from '../src/main'
 import { emulateAction } from './utils/emulateAction'
@@ -12,9 +12,7 @@ test('read initial value', () => {
 
   renderHook(() => {
     const { formTypedCtx: formTypedProps } = useForm({
-      initialConfig: {
-        name: { initialValue: 'John' },
-      },
+      initialConfig: { name: { initialValue: 'John' } },
     })
 
     const { formFields } = useFormState(formTypedProps)
@@ -34,9 +32,7 @@ test('lazy initial value', () => {
 
   renderHook(() => {
     const { formTypedCtx: formTypedProps } = useForm({
-      initialConfig: () => ({
-        name: { initialValue: 'John' },
-      }),
+      initialConfig: () => ({ name: { initialValue: 'John' } }),
     })
 
     const { formFields } = useFormState(formTypedProps)
@@ -58,9 +54,7 @@ test('is diff from initial', () => {
 
   renderHook(() => {
     const { formTypedCtx: formTypedProps, handleChange } = useForm({
-      initialConfig: {
-        name: { initialValue: 'John' },
-      },
+      initialConfig: { name: { initialValue: 'John' } },
     })
 
     const { formFields } = useFormState(formTypedProps)
@@ -99,9 +93,7 @@ describe('required fields', () => {
 
     renderHook(() => {
       const { formTypedCtx: formTypedProps, handleChange } = useForm({
-        initialConfig: {
-          name: { initialValue: '', required: true },
-        },
+        initialConfig: { name: { initialValue: '', required: true } },
       })
 
       const { formFields } = useFormState(formTypedProps)
@@ -175,11 +167,7 @@ describe('required fields', () => {
     renderHook(() => {
       const { formTypedCtx: formTypedProps, handleChange } = useForm({
         initialConfig: {
-          name: {
-            initialValue: 'Ok',
-            required: true,
-            requiredErrorMsg: false,
-          },
+          name: { initialValue: 'Ok', required: true, requiredErrorMsg: false },
         },
       })
 
@@ -214,9 +202,7 @@ describe('required fields', () => {
           birthDate: { initialValue: null as null | Date },
         },
         derivedConfig: {
-          birthDate: {
-            required: ({ fields: { age } }) => !age.isEmpty,
-          },
+          birthDate: { required: ({ fields: { age } }) => !age.isEmpty },
         },
       })
 
@@ -277,9 +263,7 @@ describe('required fields', () => {
 
     renderHook(() => {
       const { formTypedCtx: formTypedProps, touchField } = useForm({
-        initialConfig: {
-          name: { initialValue: '', required: true },
-        },
+        initialConfig: { name: { initialValue: '', required: true } },
       })
 
       const { formFields } = useFormState(formTypedProps)
@@ -346,9 +330,7 @@ describe('check if is empty', () => {
 
     renderHook(() => {
       const { formTypedCtx: formTypedProps, handleChange } = useForm({
-        initialConfig: {
-          name: { initialValue: '' },
-        },
+        initialConfig: { name: { initialValue: '' } },
         derivedConfig: {
           name: { checkIfIsEmpty: (value) => value === 'not empty' },
         },
@@ -377,6 +359,28 @@ describe('check if is empty', () => {
       name: {value:not empty, isEmpty:true}
       "
     `)
+  })
+
+  test('empty fields should not be considered changed if value keep being empty', () => {
+    const { result } = renderHook(() => {
+      const { formTypedCtx: formTypedProps, handleChange } = useForm({
+        initialConfig: { name: { initialValue: '' as string | null } },
+      })
+
+      const { formFields } = useFormState(formTypedProps)
+
+      return { formFields, handleChange }
+    })
+
+    expect(result.current.formFields.name.isDiffFromInitial).toBe(false)
+    expect(result.current.formFields.name.value).toBe('')
+
+    act(() => {
+      result.current.handleChange('name', null)
+    })
+
+    expect(result.current.formFields.name.value).toBe(null)
+    expect(result.current.formFields.name.isDiffFromInitial).toBe(false)
   })
 })
 
@@ -475,9 +479,7 @@ test('touch not found field', () => {
 
   renderHook(() => {
     const { formTypedCtx: formTypedProps, touchField } = useForm({
-      initialConfig: {
-        name: { initialValue: 'John' },
-      },
+      initialConfig: { name: { initialValue: 'John' } },
     })
 
     const { formFields } = useFormState(formTypedProps)
