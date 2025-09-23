@@ -593,12 +593,16 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
                   derived: {
                     checkIfIsEmpty: newConfig.checkIfIsEmpty,
                     required: newConfig.derivedRequired,
+                    isLoading: newConfig.isLoading,
                   },
                   validations: newConfig.fieldIsValid,
-                  untouchable: newConfig.isUntouchable ?? false,
+                  untouchable:
+                    newConfig.untouchable ?? newConfig.isUntouchable ?? false,
                   _metadata: newConfig.metadata,
                   arrayConfig: fieldConfig?.arrayConfig,
-                  simpleValidations: fieldConfig?.simpleValidations,
+                  simpleValidations:
+                    newConfig.simpleFieldIsValid
+                    ?? fieldConfig?.simpleValidations,
                 }
 
                 formConfig.fieldsMap.set(id, config)

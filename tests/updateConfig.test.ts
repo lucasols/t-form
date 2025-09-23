@@ -225,6 +225,95 @@ test('remove field', () => {
   `)
 })
 
+test('replace config applies simpleFieldIsValid', () => {
+  const { result } = renderHook(() =>
+    useForm({
+      initialConfig: {
+        password: { initialValue: '' },
+      },
+    }),
+  )
+
+  act(() => {
+    result.current.updateConfig({
+      fields: {
+        password: {
+          replace: true,
+          initialValue: '',
+          simpleFieldIsValid: ({ value }) =>
+            value === 'secret' ? true : 'Invalid password',
+        },
+      },
+    })
+  })
+
+  act(() => {
+    result.current.handleChange('password', 'wrong')
+  })
+
+  expect(result.current.formStore.state.fields.password.errors).toEqual([
+    'Invalid password',
+  ])
+  expect(result.current.formStore.state.fields.password.isValid).toBe(false)
+})
+
+test('replace config applies untouchable flag', () => {
+  const { result } = renderHook(() =>
+    useForm({
+      initialConfig: {
+        status: { initialValue: '' },
+      },
+    }),
+  )
+
+  act(() => {
+    result.current.updateConfig({
+      fields: {
+        status: {
+          replace: true,
+          initialValue: '',
+          untouchable: true,
+        },
+      },
+    })
+  })
+
+  act(() => {
+    result.current.handleChange('status', 'updated')
+  })
+
+  expect(result.current.formStore.state.fields.status.isTouched).toBe(false)
+})
+
+test('replace config applies isLoading derived check', () => {
+  const { result } = renderHook(() =>
+    useForm({
+      initialConfig: {
+        status: { initialValue: '' },
+      },
+    }),
+  )
+
+  act(() => {
+    result.current.updateConfig({
+      fields: {
+        status: {
+          replace: true,
+          initialValue: '',
+          isLoading: (value) => value === 'loading',
+        },
+      },
+    })
+  })
+
+  act(() => {
+    result.current.handleChange('status', 'loading')
+  })
+
+  expect(result.current.formStore.state.fields.status.valueIsLoading).toBe(true)
+  expect(result.current.formStore.state.fields.status.isValid).toBe(false)
+})
+
 test('add field', () => {
   const renders = createLoggerStore()
 
