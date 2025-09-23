@@ -17,7 +17,7 @@ export function getFormValuesObj<T extends AnyInitialConfig>(
       throw new Error(`Field "${key}" is invalid`)
     }
 
-    values[key] = field.value
+    values[key] = normalizeValue(field.value)
   }
 
   return values
@@ -35,9 +35,13 @@ export function getChangedFormValuesObj<T extends AnyInitialConfig>(
     }
 
     if (field.isDiffFromInitial) {
-      values[key] = field.value
+      values[key] = normalizeValue(field.value)
     }
   }
 
   return values
+}
+
+function normalizeValue(value: unknown) {
+  return typeof value === 'string' ? value.trim() : value
 }
