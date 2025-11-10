@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
-import { useFormWithPreTypedValues } from '../src/main'
+import { useFormState, useFormWithPreTypedValues } from '../src/main'
 import { pick } from '../src/utils/object'
 
 describe('basic method works', () => {
@@ -14,7 +14,7 @@ describe('basic method works', () => {
       withCustomDerivedValidation: string
     }
 
-    const { useFormState, handleChange } =
+    const { formTypedCtx, handleChange } =
       useFormWithPreTypedValues<FormValues>({
         initialConfig: {
           name: { initialValue: 'John' },
@@ -54,7 +54,7 @@ describe('basic method works', () => {
       },
     })
 
-    const { formFields, formIsValid } = useFormState()
+    const { formFields, formIsValid } = useFormState(formTypedCtx)
 
     return {
       formFields,
@@ -218,7 +218,7 @@ test('resetFieldsOnChange works with useFormWithPreTypedValues', () => {
       city: string | null
     }
 
-    const { useFormState, handleChange } =
+    const { formTypedCtx, handleChange } =
       useFormWithPreTypedValues<FormValues>({
         initialConfig: {
           country: {
@@ -233,7 +233,7 @@ test('resetFieldsOnChange works with useFormWithPreTypedValues', () => {
         },
       })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     return {
       formFields,
@@ -300,7 +300,7 @@ test('resetItselfOnChange works with useFormWithPreTypedValues', () => {
       fullName: string
     }
 
-    const { useFormState, handleChange } =
+    const { formTypedCtx, handleChange } =
       useFormWithPreTypedValues<FormValues>({
         initialConfig: {
           firstName: { initialValue: '' },
@@ -315,7 +315,7 @@ test('resetItselfOnChange works with useFormWithPreTypedValues', () => {
         },
       })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     return {
       formFields,

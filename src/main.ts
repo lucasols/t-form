@@ -452,7 +452,6 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
       }
 
       formStore.produceState((draft) => {
-
         for (const [id, value] of Object.entries(valuesToUpdate)) {
           if (value === undefined && !isSingleUpdate) {
             continue
@@ -1355,7 +1354,7 @@ type FieldDerivedConfigFromValues<
   FM,
 > = FieldDerivedConfig<T[keyof T], FieldsState<FormConfigFromValues<T>>, FM>
 
-type PreTypedValuesFieldConfig<
+export type PreTypedValuesFieldConfig<
   T extends Record<string, any>,
   K extends keyof T,
   FM = undefined,
