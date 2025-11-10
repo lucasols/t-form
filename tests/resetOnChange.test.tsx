@@ -540,6 +540,76 @@ test('resetItselfOnChange: only reset when specific watched fields change', () =
   `)
 })
 
+test('forceFormValidation should mark fields with reset configs as touched', () => {
+  const renders = createLoggerStore()
+
+  const { result } = renderHook(() => {
+    const { handleChange, formTypedCtx, forceFormValidation } = useForm({
+      initialConfig: {
+        country: { initialValue: '', required: true },
+        state: { initialValue: '', required: true },
+        city: { initialValue: '', required: true },
+      },
+      derivedConfig: {
+        country: {
+          resetFieldsOnChange: {
+            state: '',
+            city: '',
+          },
+        },
+        state: {
+          resetFieldsOnChange: {
+            city: '',
+          },
+        },
+      },
+    })
+
+    const { formFields } = useFormState(formTypedCtx)
+
+    renders.add({
+      country: formFields.country.value,
+      state: formFields.state.value,
+      city: formFields.city.value,
+      countryTouched: formFields.country.isTouched,
+      stateTouched: formFields.state.isTouched,
+      cityTouched: formFields.city.isTouched,
+    })
+
+    return { handleChange, forceFormValidation }
+  })
+
+  // Call forceFormValidation - should mark all fields as touched
+  act(() => {
+    renders.addMark('forceFormValidation called - should mark all as touched')
+    result.current.forceFormValidation()
+  })
+
+  expect(renders.snapshot).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⋅ country: ''
+    ⋅ state: ''
+    ⋅ city: ''
+    ⋅ countryTouched: ❌
+    ⋅ stateTouched: ❌
+    ⋅ cityTouched: ❌
+    └─
+
+    >>> forceFormValidation called - should mark all as touched
+
+    ┌─
+    ⋅ country: ''
+    ⋅ state: ''
+    ⋅ city: ''
+    ⋅ countryTouched: ✅
+    ⋅ stateTouched: ✅
+    ⋅ cityTouched: ✅
+    └─
+    "
+  `)
+})
+
 test('multiple fields with resetFieldsOnChange affecting the same target', () => {
   const renders = createLoggerStore()
 
@@ -587,6 +657,135 @@ test('multiple fields with resetFieldsOnChange affecting the same target', () =>
     >>> Change both triggers - first one wins
 
     -> trigger1: ✅ ⋅ trigger2: ✅ ⋅ target: reset-by-trigger1 ⋅ targetTouched: ❌
+    "
+  `)
+})
+
+test('resetFieldsOnChange should only reset when value actually changes', () => {
+  const renders = createLoggerStore()
+
+  const { result } = renderHook(() => {
+    const { handleChange, formTypedCtx } = useForm({
+      initialConfig: {
+        country: { initialValue: 'USA' },
+        state: { initialValue: 'California' },
+        city: { initialValue: 'Los Angeles' },
+      },
+      derivedConfig: {
+        country: {
+          resetFieldsOnChange: {
+            state: '',
+            city: '',
+          },
+        },
+      },
+    })
+
+    const { formFields } = useFormState(formTypedCtx)
+
+    renders.add({
+      country: formFields.country.value,
+      state: formFields.state.value,
+      city: formFields.city.value,
+      stateTouched: formFields.state.isTouched,
+      cityTouched: formFields.city.isTouched,
+    })
+
+    return { handleChange }
+  })
+
+  // Call handleChange with same value - should NOT reset
+  act(() => {
+    renders.addMark('Change country to same value - should NOT reset')
+    result.current.handleChange('country', 'USA')
+  })
+
+  // Call handleChange with different value - should reset
+  act(() => {
+    renders.addMark('Change country to different value - should reset')
+    result.current.handleChange('country', 'Canada')
+  })
+
+  expect(renders.snapshot).toMatchInlineSnapshot(`
+    "
+    ┌─
+    ⋅ country: USA
+    ⋅ state: California
+    ⋅ city: Los Angeles
+    ⋅ stateTouched: ❌
+    ⋅ cityTouched: ❌
+    └─
+
+    >>> Change country to same value - should NOT reset
+
+    ┌─
+    ⋅ country: USA
+    ⋅ state: California
+    ⋅ city: Los Angeles
+    ⋅ stateTouched: ❌
+    ⋅ cityTouched: ❌
+    └─
+
+    >>> Change country to different value - should reset
+
+    -> country: Canada ⋅ state: '' ⋅ city: '' ⋅ stateTouched: ❌ ⋅ cityTouched: ❌
+    "
+  `)
+})
+
+test('resetItselfOnChange should only reset when watched values actually change', () => {
+  const renders = createLoggerStore()
+
+  const { result } = renderHook(() => {
+    const { handleChange, formTypedCtx } = useForm({
+      initialConfig: {
+        firstName: { initialValue: 'John' },
+        fullName: { initialValue: 'John Doe' },
+      },
+      derivedConfig: {
+        fullName: {
+          resetItselfOnChange: {
+            value: '',
+            watchFields: ['firstName'],
+          },
+        },
+      },
+    })
+
+    const { formFields } = useFormState(formTypedCtx)
+
+    renders.add({
+      firstName: formFields.firstName.value,
+      fullName: formFields.fullName.value,
+      fullNameTouched: formFields.fullName.isTouched,
+    })
+
+    return { handleChange }
+  })
+
+  // Call handleChange with same value - should NOT reset fullName
+  act(() => {
+    renders.addMark('Change firstName to same value - should NOT reset')
+    result.current.handleChange('firstName', 'John')
+  })
+
+  // Call handleChange with different value - should reset fullName
+  act(() => {
+    renders.addMark('Change firstName to different value - should reset')
+    result.current.handleChange('firstName', 'Jane')
+  })
+
+  expect(renders.snapshot).toMatchInlineSnapshot(`
+    "
+    -> firstName: John ⋅ fullName: John Doe ⋅ fullNameTouched: ❌
+
+    >>> Change firstName to same value - should NOT reset
+
+    -> firstName: John ⋅ fullName: John Doe ⋅ fullNameTouched: ❌
+
+    >>> Change firstName to different value - should reset
+
+    -> firstName: Jane ⋅ fullName: '' ⋅ fullNameTouched: ❌
     "
   `)
 })

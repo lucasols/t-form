@@ -409,7 +409,17 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
       const fieldsToReset = new Set<string>()
       const changedFieldIds = Object.keys(valuesToUpdate)
 
-      for (const changedFieldId of changedFieldIds) {
+      // Track which fields actually changed their values (not just being updated)
+      const actuallyChangedFieldIds = changedFieldIds.filter((fieldId) => {
+        const currentValue = formStore.state.fields[fieldId]?.value
+        const newValue = unwrapSetterValue(
+          valuesToUpdate[fieldId as K],
+          currentValue,
+        )
+        return currentValue !== newValue
+      })
+
+      for (const changedFieldId of actuallyChangedFieldIds) {
         const changedFieldConfig = formConfig.fieldsMap.get(changedFieldId)
         // resetFieldsOnChange: if field X changes, reset fields A, B, C
         if (changedFieldConfig?.derived?.resetFieldsOnChange) {
@@ -429,7 +439,7 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
         if (fieldConfig.derived?.resetItselfOnChange) {
           const { watchFields, value } = fieldConfig.derived.resetItselfOnChange
           const shouldReset = watchFields.some((watchedFieldId) =>
-            changedFieldIds.includes(String(watchedFieldId)),
+            actuallyChangedFieldIds.includes(String(watchedFieldId)),
           )
           if (shouldReset && !valuesToUpdate[fieldId as K]) {
             valuesToUpdate[fieldId as K] = value as ValueArg<T, K>
