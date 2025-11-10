@@ -209,3 +209,149 @@ describe('basic method works', () => {
     `)
   })
 })
+
+test('resetFieldsOnChange works with useFormWithPreTypedValues', () => {
+  const { result } = renderHook(() => {
+    type FormValues = {
+      country: string | null
+      state: string | null
+      city: string | null
+    }
+
+    const { useFormState, handleChange } =
+      useFormWithPreTypedValues<FormValues>({
+        initialConfig: {
+          country: {
+            initialValue: null,
+            resetFieldsOnChange: {
+              state: null,
+              city: null,
+            },
+          },
+          state: { initialValue: null },
+          city: { initialValue: null },
+        },
+      })
+
+    const { formFields } = useFormState()
+
+    return {
+      formFields,
+      handleChange,
+    }
+  })
+
+  // Set values
+  act(() => {
+    result.current.handleChange('country', 'USA')
+  })
+
+  act(() => {
+    result.current.handleChange('state', 'California')
+  })
+
+  act(() => {
+    result.current.handleChange('city', 'Los Angeles')
+  })
+
+  expect({
+    country: result.current.formFields.country.value,
+    state: result.current.formFields.state.value,
+    city: result.current.formFields.city.value,
+    stateTouched: result.current.formFields.state.isTouched,
+    cityTouched: result.current.formFields.city.isTouched,
+  }).toMatchInlineSnapshot(`
+    {
+      "city": "Los Angeles",
+      "cityTouched": true,
+      "country": "USA",
+      "state": "California",
+      "stateTouched": true,
+    }
+  `)
+
+  // Change country - should reset state and city
+  act(() => {
+    result.current.handleChange('country', 'Canada')
+  })
+
+  expect({
+    country: result.current.formFields.country.value,
+    state: result.current.formFields.state.value,
+    city: result.current.formFields.city.value,
+    stateTouched: result.current.formFields.state.isTouched,
+    cityTouched: result.current.formFields.city.isTouched,
+  }).toMatchInlineSnapshot(`
+    {
+      "city": null,
+      "cityTouched": false,
+      "country": "Canada",
+      "state": null,
+      "stateTouched": false,
+    }
+  `)
+})
+
+test('resetItselfOnChange works with useFormWithPreTypedValues', () => {
+  const { result } = renderHook(() => {
+    type FormValues = {
+      firstName: string
+      lastName: string
+      fullName: string
+    }
+
+    const { useFormState, handleChange } =
+      useFormWithPreTypedValues<FormValues>({
+        initialConfig: {
+          firstName: { initialValue: '' },
+          lastName: { initialValue: '' },
+          fullName: {
+            initialValue: '',
+            resetItselfOnChange: {
+              value: '',
+              watchFields: ['firstName', 'lastName'],
+            },
+          },
+        },
+      })
+
+    const { formFields } = useFormState()
+
+    return {
+      formFields,
+      handleChange,
+    }
+  })
+
+  // Set fullName manually
+  act(() => {
+    result.current.handleChange('fullName', 'John Doe')
+  })
+
+  expect({
+    fullName: result.current.formFields.fullName.value,
+    fullNameTouched: result.current.formFields.fullName.isTouched,
+  }).toMatchInlineSnapshot(`
+    {
+      "fullName": "John Doe",
+      "fullNameTouched": true,
+    }
+  `)
+
+  // Change firstName - should reset fullName
+  act(() => {
+    result.current.handleChange('firstName', 'Jane')
+  })
+
+  expect({
+    firstName: result.current.formFields.firstName.value,
+    fullName: result.current.formFields.fullName.value,
+    fullNameTouched: result.current.formFields.fullName.isTouched,
+  }).toMatchInlineSnapshot(`
+    {
+      "firstName": "Jane",
+      "fullName": "",
+      "fullNameTouched": false,
+    }
+  `)
+})

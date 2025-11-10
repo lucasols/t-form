@@ -1370,6 +1370,15 @@ type PreTypedValuesFieldConfig<
     T,
     FM
   >['resetIfDerivedRequiredChangeToFalse']
+  isLoading?: FieldDerivedConfigFromValues<T, FM>['isLoading']
+  resetFieldsOnChange?: FieldDerivedConfigFromValues<
+    T,
+    FM
+  >['resetFieldsOnChange']
+  resetItselfOnChange?: FieldDerivedConfigFromValues<
+    T,
+    FM
+  >['resetItselfOnChange']
   isValid?: FieldsValidation<FormConfigFromValues<T>, FM>[K]
 }
 
@@ -1411,6 +1420,9 @@ export function useFormWithPreTypedValues<
           isFunction(fieldConfig.required) ? fieldConfig.required : undefined,
         resetIfDerivedRequiredChangeToFalse:
           fieldConfig.resetIfDerivedRequiredChangeToFalse,
+        isLoading: fieldConfig.isLoading,
+        resetFieldsOnChange: fieldConfig.resetFieldsOnChange,
+        resetItselfOnChange: fieldConfig.resetItselfOnChange,
       }
 
       fieldIsValid[id as keyof Config] = fieldConfig.isValid
