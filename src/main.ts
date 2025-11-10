@@ -62,6 +62,8 @@ type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
   required?: (context: { fields: F; formMetadata: FM | undefined }) => boolean
   resetIfDerivedRequiredChangeToFalse?: { value: T }
   isLoading?: (value: T) => boolean
+  resetFieldsOnChange?: { [K in keyof F]?: F[K]['initialValue'] }
+  resetItselfOnChange?: { value: T; watchFields: (keyof F)[] }
 }
 
 export type SilentInvalid = { silentInvalid: true }
@@ -176,6 +178,11 @@ export type UpdateFieldConfig<
     fields: FieldsState<T>
     formMetadata: FM | undefined
   }) => boolean
+  resetFieldsOnChange?: { [P in keyof T]?: T[P]['initialValue'] }
+  resetItselfOnChange?: {
+    value: T[K]['initialValue']
+    watchFields: (keyof T)[]
+  }
   simpleFieldIsValid?: FieldSimplifiedValidation<
     T[K]['initialValue'],
     T[K]['metadata']
@@ -398,8 +405,53 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
           ({ [firstArg]: args[1] } as Record<K, ValueArg<T, K>>)
         : firstArg
 
+      // Collect fields to reset based on resetOnChange configs
+      const fieldsToReset = new Set<string>()
+      const changedFieldIds = Object.keys(valuesToUpdate)
+
+      for (const changedFieldId of changedFieldIds) {
+        const changedFieldConfig = formConfig.fieldsMap.get(changedFieldId)
+        // resetFieldsOnChange: if field X changes, reset fields A, B, C
+        if (changedFieldConfig?.derived?.resetFieldsOnChange) {
+          for (const [targetFieldId, resetValue] of Object.entries(
+            changedFieldConfig.derived.resetFieldsOnChange,
+          )) {
+            if (!valuesToUpdate[targetFieldId as K]) {
+              valuesToUpdate[targetFieldId as K] = resetValue as ValueArg<T, K>
+              fieldsToReset.add(String(targetFieldId))
+            }
+          }
+        }
+      }
+
+      // resetItselfOnChange: if watched fields change, reset this field
+      for (const [fieldId, fieldConfig] of formConfig.fieldsMap) {
+        if (fieldConfig.derived?.resetItselfOnChange) {
+          const { watchFields, value } = fieldConfig.derived.resetItselfOnChange
+          const shouldReset = watchFields.some((watchedFieldId) =>
+            changedFieldIds.includes(String(watchedFieldId)),
+          )
+          if (shouldReset && !valuesToUpdate[fieldId as K]) {
+            valuesToUpdate[fieldId as K] = value as ValueArg<T, K>
+            fieldsToReset.add(String(fieldId))
+          }
+        }
+      }
+
+      // Add reset fields to skipTouch option
+      if (fieldsToReset.size > 0) {
+        const resetFieldsArray = Array.from(fieldsToReset) as K[]
+        if (!options) {
+          options = { skipTouch: resetFieldsArray }
+        } else if (!options.skipTouch) {
+          options.skipTouch = resetFieldsArray
+        } else if (Array.isArray(options.skipTouch)) {
+          options.skipTouch = [...options.skipTouch, ...resetFieldsArray]
+        }
+        // If skipTouch is true, keep it as true (all fields skip touch anyway)
+      }
+
       formStore.produceState((draft) => {
-        const unchangedFields = new Set<string>(Object.keys(draft.fields))
 
         for (const [id, value] of Object.entries(valuesToUpdate)) {
           if (value === undefined && !isSingleUpdate) {
@@ -451,7 +503,10 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
             shouldSkipTouch,
           )
 
-          unchangedFields.delete(id)
+          // Reset touch state for fields being reset as side effects
+          if (fieldsToReset.has(id)) {
+            fieldState.isTouched = false
+          }
         }
 
         updateDerivedConfig(
@@ -594,6 +649,8 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
                     checkIfIsEmpty: newConfig.checkIfIsEmpty,
                     required: newConfig.derivedRequired,
                     isLoading: newConfig.isLoading,
+                    resetFieldsOnChange: newConfig.resetFieldsOnChange,
+                    resetItselfOnChange: newConfig.resetItselfOnChange,
                   },
                   validations: newConfig.fieldIsValid,
                   untouchable:
@@ -702,6 +759,24 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
                 }
 
                 fieldConfig.derived.isLoading = newConfig.isLoading
+              }
+
+              if (newConfig.resetFieldsOnChange !== undefined) {
+                if (!fieldConfig.derived) {
+                  fieldConfig.derived = {}
+                }
+
+                fieldConfig.derived.resetFieldsOnChange =
+                  newConfig.resetFieldsOnChange
+              }
+
+              if (newConfig.resetItselfOnChange !== undefined) {
+                if (!fieldConfig.derived) {
+                  fieldConfig.derived = {}
+                }
+
+                fieldConfig.derived.resetItselfOnChange =
+                  newConfig.resetItselfOnChange
               }
 
               if (newConfig.metadata !== undefined) {

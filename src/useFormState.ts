@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { FieldsState, FieldState, FormStore, getGenericFormState } from './main'
+import {
+  FieldsState,
+  FieldState,
+  FormStore,
+  getGenericFormState,
+} from './main'
 import { objectTypedEntries } from './utils/object'
 import type { AnyInitialConfig } from './utils/type'
 const formStoreSymbol = Symbol('formStore')
