@@ -412,13 +412,15 @@ describe('validate form', () => {
     renderHook(() => {
       const { formTypedCtx, handleChange } = useForm({
         initialConfig: { name: { initialValue: '' }, age: { initialValue: 0 } },
-        advancedFormValidation({ fieldsState, setFormError }) {
+        advancedFormValidation({ fieldsState }) {
           if (
             fieldsState.age.value < 18
             && fieldsState.name.value === 'Adult'
           ) {
-            setFormError('You must be at least 18 years old')
+            return 'You must be at least 18 years old'
           }
+
+          return true
         },
       })
 

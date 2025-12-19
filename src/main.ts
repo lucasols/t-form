@@ -305,14 +305,11 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
       return
     }
 
-    const methods = {
+    const result = advancedFormValidation({
       fieldsState: formStoreState.fields,
-      setFormError: (error: string) => {
-        formStoreState.formError = error
-      },
-    }
+    })
 
-    advancedFormValidation(methods)
+    formStoreState.formError = result === true ? false : result
   }
 
   const latestFormValidation = useLatestValue(performAdvancedFormValidation)
