@@ -468,6 +468,43 @@ describe('validate form', () => {
       "
     `)
   })
+
+  test('form initial state is invalid', () => {
+    const renders = createRenderStore()
+
+    renderHook(() => {
+      const { formTypedCtx } = useForm({
+        initialConfig: { name: { initialValue: '' }, age: { initialValue: 16 } },
+        advancedFormValidation({ fieldsState }) {
+          if (fieldsState.age.value < 18) {
+            return 'You must be at least 18 years old'
+          }
+
+          return true
+        },
+      })
+
+      const { formFields, formError, formIsValid } = useFormState(formTypedCtx)
+
+      renders.add({
+        formIsValid,
+        formError,
+        name: simplifyFieldState(formFields.name),
+        age: simplifyFieldState(formFields.age),
+      })
+    })
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      ┌─
+      ⎢ formIsValid: false
+      ⎢ formError: You must be at least 18 years old
+      ⎢ name: {val:, initV:, req:N, errors:null, isValid:Y, isEmpty:Y, isTouched:N, isDiff:N, isL:N}
+      ⎢ age: {val:16, initV:16, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:N, isL:N}
+      └─
+      "
+    `)
+  })
 })
 
 test('force form validation', () => {
