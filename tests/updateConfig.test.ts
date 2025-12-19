@@ -3,6 +3,7 @@ import { act, renderHook } from '@testing-library/react'
 import { describe } from 'node:test'
 import { expect, test } from 'vitest'
 import { DynamicFormInitialConfig, useForm } from '../src/main'
+import { useFormState } from '../src/useFormState'
 import { emulateAction } from './utils/emulateAction'
 import { simplifyFieldsState } from './utils/simplifyFieldsState'
 
@@ -21,14 +22,15 @@ test('update a field config', () => {
   const setPassword = emulateAction<string>()
 
   renderHook(() => {
-    const { useFormState, updateConfig, handleChange } = useForm({
+    const { formTypedCtx, updateConfig, handleChange } = useForm({
       initialConfig: { password: { initialValue: '' } },
       fieldIsValid: {
         password: ({ value }) => (value === 'wrong' ? 'Wrong password' : true),
       },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const { formFields, isDiffFromInitial, formIsValid } =
+      useFormState(formTypedCtx)
 
     renders.add({
       isDiffFromInitial,
@@ -182,7 +184,7 @@ test('remove field', () => {
   const removeField = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<
+    const { formTypedCtx, updateConfig } = useForm<
       DynamicFormInitialConfig<string>
     >({
       initialConfig: {
@@ -191,7 +193,8 @@ test('remove field', () => {
       },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const { formFields, isDiffFromInitial, formIsValid } =
+      useFormState(formTypedCtx)
 
     renders.add({
       isDiffFromInitial,
@@ -227,11 +230,7 @@ test('remove field', () => {
 
 test('replace config applies simpleFieldIsValid', () => {
   const { result } = renderHook(() =>
-    useForm({
-      initialConfig: {
-        password: { initialValue: '' },
-      },
-    }),
+    useForm({ initialConfig: { password: { initialValue: '' } } }),
   )
 
   act(() => {
@@ -259,21 +258,13 @@ test('replace config applies simpleFieldIsValid', () => {
 
 test('replace config applies untouchable flag', () => {
   const { result } = renderHook(() =>
-    useForm({
-      initialConfig: {
-        status: { initialValue: '' },
-      },
-    }),
+    useForm({ initialConfig: { status: { initialValue: '' } } }),
   )
 
   act(() => {
     result.current.updateConfig({
       fields: {
-        status: {
-          replace: true,
-          initialValue: '',
-          untouchable: true,
-        },
+        status: { replace: true, initialValue: '', untouchable: true },
       },
     })
   })
@@ -287,11 +278,7 @@ test('replace config applies untouchable flag', () => {
 
 test('replace config applies isLoading derived check', () => {
   const { result } = renderHook(() =>
-    useForm({
-      initialConfig: {
-        status: { initialValue: '' },
-      },
-    }),
+    useForm({ initialConfig: { status: { initialValue: '' } } }),
   )
 
   act(() => {
@@ -320,11 +307,12 @@ test('add field', () => {
   const addField = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<
+    const { formTypedCtx, updateConfig } = useForm<
       DynamicFormInitialConfig<string>
     >({ initialConfig: { password: { initialValue: '' } } })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const { formFields, isDiffFromInitial, formIsValid } =
+      useFormState(formTypedCtx)
 
     renders.add({
       isDiffFromInitial,
@@ -362,7 +350,7 @@ test('merge and removeExcess', () => {
   const mergeAndRemoveExcess = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<
+    const { formTypedCtx, updateConfig } = useForm<
       DynamicFormInitialConfig<string>
     >({
       initialConfig: {
@@ -371,7 +359,8 @@ test('merge and removeExcess', () => {
       },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const { formFields, isDiffFromInitial, formIsValid } =
+      useFormState(formTypedCtx)
 
     renders.add({
       isDiffFromInitial,
@@ -407,7 +396,7 @@ test('override some fields', () => {
   const overrideSomeFields = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<
+    const { formTypedCtx, updateConfig } = useForm<
       DynamicFormInitialConfig<string, { foo: string } | undefined>
     >({
       initialConfig: {
@@ -420,7 +409,8 @@ test('override some fields', () => {
       },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const { formFields, isDiffFromInitial, formIsValid } =
+      useFormState(formTypedCtx)
 
     renders.add({
       isDiffFromInitial,
@@ -461,7 +451,7 @@ test('override all', () => {
   const overrideAll = emulateAction()
 
   renderHook(() => {
-    const { useFormState, updateConfig } = useForm<
+    const { formTypedCtx, updateConfig } = useForm<
       DynamicFormInitialConfig<string, { foo: string } | undefined>
     >({
       initialConfig: {
@@ -474,7 +464,8 @@ test('override all', () => {
       },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const { formFields, isDiffFromInitial, formIsValid } =
+      useFormState(formTypedCtx)
 
     renders.add({
       isDiffFromInitial,
@@ -521,7 +512,7 @@ test('update form metadata', () => {
   const updateFormMetadata = emulateAction<Metadata>()
 
   renderHook(() => {
-    const { useFormState, formStore, updateConfig } = useForm({
+    const { formTypedCtx, formStore, updateConfig } = useForm({
       initialFormMetadata: 'invalid' as Metadata,
       initialConfig: { password: { initialValue: '' } },
       fieldIsValid: {
@@ -542,7 +533,8 @@ test('update form metadata', () => {
       },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const { formFields, isDiffFromInitial, formIsValid } =
+      useFormState(formTypedCtx)
     const formMetadata = formStore.useSelector((state) => state.formMetadata)
 
     renders.add({
@@ -592,13 +584,14 @@ test('update initialValue should update isDiffFromInitial', () => {
   const setPassword = emulateAction<string>()
 
   renderHook(() => {
-    const { useFormState, updateConfig, handleChange } = useForm({
+    const { formTypedCtx, updateConfig, handleChange } = useForm({
       initialConfig: { password: { initialValue: '' } },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState({
-      mustBeDiffFromInitial: true,
-    })
+    const { formFields, isDiffFromInitial, formIsValid } = useFormState(
+      formTypedCtx,
+      { mustBeDiffFromInitial: true },
+    )
 
     renders.add({
       isDiffFromInitial,
@@ -644,14 +637,15 @@ describe('updateUntouchedWithInitial', () => {
   const renders = createLoggerStore()
 
   const { result } = renderHook(() => {
-    const { useFormState, updateConfig, handleChange, untouchAll } = useForm({
+    const { formTypedCtx, updateConfig, handleChange, untouchAll } = useForm({
       initialConfig: {
         password: { initialValue: '' },
         name: { initialValue: '' },
       },
     })
 
-    const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+    const { formFields, isDiffFromInitial, formIsValid } =
+      useFormState(formTypedCtx)
 
     renders.add({
       isDiffFromInitial,

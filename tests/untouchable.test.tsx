@@ -2,20 +2,21 @@ import { createLoggerStore, getResultFn } from '@ls-stack/utils/testUtils'
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import { useForm } from '../src/main'
+import { useFormState } from '../src/useFormState'
 import { simplifyFieldsState } from './utils/simplifyFieldsState'
 
 describe('untouchable', () => {
   const renders = createLoggerStore()
 
   const { result } = renderHook(() => {
-    const { useFormState, updateConfig, handleChange, touchField } = useForm({
+    const { formTypedCtx, updateConfig, handleChange, touchField } = useForm({
       initialConfig: {
         untouchable: { initialValue: '', untouchable: true },
         normal: { initialValue: '' },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(
       simplifyFieldsState(formFields, ['value', 'initialValue', 'isTouched']),
@@ -110,13 +111,13 @@ describe('required untouchable', () => {
   const renders = createLoggerStore()
 
   const { result } = renderHook(() => {
-    const { useFormState, updateConfig, handleChange } = useForm({
+    const { formTypedCtx, updateConfig, handleChange } = useForm({
       initialConfig: {
         untouchable: { initialValue: 'ok', required: true, untouchable: true },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(
       simplifyFieldsState(formFields, [

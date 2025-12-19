@@ -207,10 +207,7 @@ export type DynamicFormInitialConfig<V = unknown, M = undefined> = Record<
 
 type AdvancedFormValidation<
   T extends Record<string, FieldInitialConfig<any, any>>,
-> = (methods: {
-  fieldsState: FieldsState<T>
-  setFormError: (error: string) => void
-}) => void
+> = (methods: { fieldsState: FieldsState<T> }) => true | string
 
 type ArrayFieldsConfig<T extends AnyInitialConfig> = {
   [K in keyof T]?: T[K]['initialValue'] extends (infer U)[] ?

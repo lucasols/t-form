@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
-import { useFormState, useFormWithPreTypedValues } from '../src/main'
+import { useFormWithPreTypedValues } from '../src/main'
+import { useFormState } from '../src/useFormState'
 import { pick } from '../src/utils/object'
 
 describe('basic method works', () => {
@@ -35,32 +36,21 @@ describe('basic method works', () => {
           withCustomDerivedValidation: {
             initialValue: '20',
             isValid: ({ value, fields }) =>
-              fields.age.value.toString() !== value
-                ? `Value must be equal to ${fields.age.value}`
-                : true,
+              fields.age.value.toString() !== value ?
+                `Value must be equal to ${fields.age.value}`
+              : true,
           },
         },
       })
 
-    useFormWithPreTypedValues<{
-      wrongValue: string
-    }>({
+    useFormWithPreTypedValues<{ wrongValue: string }>({
       // @ts-expect-error - should return an error
-      initialConfig: {
-        wrongValue: {
-          initialValue: 8,
-          required: true,
-        },
-      },
+      initialConfig: { wrongValue: { initialValue: 8, required: true } },
     })
 
     const { formFields, formIsValid } = useFormState(formTypedCtx)
 
-    return {
-      formFields,
-      formIsValid,
-      handleChange,
-    }
+    return { formFields, formIsValid, handleChange }
   })
 
   function getFormFields() {
@@ -74,10 +64,8 @@ describe('basic method works', () => {
   }
 
   test('initial value is ok', () => {
-    expect({
-      name: getFormFields().name.value,
-      age: getFormFields().age.value,
-    }).toMatchInlineSnapshot(`
+    expect({ name: getFormFields().name.value, age: getFormFields().age.value })
+      .toMatchInlineSnapshot(`
       {
         "age": 10,
         "name": "John",
@@ -223,10 +211,7 @@ test('resetFieldsOnChange works with useFormWithPreTypedValues', () => {
         initialConfig: {
           country: {
             initialValue: null,
-            resetFieldsOnChange: {
-              state: null,
-              city: null,
-            },
+            resetFieldsOnChange: { state: null, city: null },
           },
           state: { initialValue: null },
           city: { initialValue: null },
@@ -235,10 +220,7 @@ test('resetFieldsOnChange works with useFormWithPreTypedValues', () => {
 
     const { formFields } = useFormState(formTypedCtx)
 
-    return {
-      formFields,
-      handleChange,
-    }
+    return { formFields, handleChange }
   })
 
   // Set values
@@ -294,11 +276,7 @@ test('resetFieldsOnChange works with useFormWithPreTypedValues', () => {
 
 test('resetItselfOnChange works with useFormWithPreTypedValues', () => {
   const { result } = renderHook(() => {
-    type FormValues = {
-      firstName: string
-      lastName: string
-      fullName: string
-    }
+    type FormValues = { firstName: string; lastName: string; fullName: string }
 
     const { formTypedCtx, handleChange } =
       useFormWithPreTypedValues<FormValues>({
@@ -317,10 +295,7 @@ test('resetItselfOnChange works with useFormWithPreTypedValues', () => {
 
     const { formFields } = useFormState(formTypedCtx)
 
-    return {
-      formFields,
-      handleChange,
-    }
+    return { formFields, handleChange }
   })
 
   // Set fullName manually

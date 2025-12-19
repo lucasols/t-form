@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import { getFieldConfig, useForm } from '../src/main'
+import { useFormState } from '../src/useFormState'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
 import {
@@ -15,19 +16,17 @@ describe('validate field', () => {
     const setPassword = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
-        initialConfig: {
-          password: { initialValue: 'a' },
-        },
+      const { formTypedCtx, handleChange } = useForm({
+        initialConfig: { password: { initialValue: 'a' } },
         fieldIsValid: {
           password: ({ value }) =>
-            value.length < 8
-              ? 'Password must have at least 8 characters'
-              : true,
+            value.length < 8 ?
+              'Password must have at least 8 characters'
+            : true,
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(
         simplifyFieldsState(formFields, ['value', 'errors', 'isValid']),
@@ -63,25 +62,23 @@ describe('validate field', () => {
     const setPassword = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
-        initialConfig: {
-          password: { initialValue: 'a' },
-        },
+      const { formTypedCtx, handleChange } = useForm({
+        initialConfig: { password: { initialValue: 'a' } },
         fieldIsValid: {
           password: [
             ({ value }) =>
-              value.length < 8
-                ? 'Password must have at least 8 characters'
-                : true,
+              value.length < 8 ?
+                'Password must have at least 8 characters'
+              : true,
             ({ value }) =>
-              !value.match(/[0-9]/)
-                ? 'Password must have at least one number'
-                : true,
+              !value.match(/[0-9]/) ?
+                'Password must have at least one number'
+              : true,
           ],
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(
         simplifyFieldsState(formFields, ['value', 'errors', 'isValid']),
@@ -118,7 +115,7 @@ describe('validate field', () => {
     const setConfirmPassword = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedCtx, handleChange } = useForm({
         initialConfig: {
           password: { initialValue: '', required: true },
           confirmPassword: { initialValue: '', required: true },
@@ -129,7 +126,7 @@ describe('validate field', () => {
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(
         simplifyFieldsState(formFields, ['value', 'errors', 'isValid']),
@@ -185,7 +182,7 @@ describe('validate field', () => {
     const field3 = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedCtx, handleChange } = useForm({
         initialConfig: {
           field1: { initialValue: '', required: true },
           field2: { initialValue: '', required: true },
@@ -194,8 +191,8 @@ describe('validate field', () => {
         fieldIsValid: {
           field2: ({ value, fields }) => {
             if (
-              value === fields.field1.value ||
-              value === fields.field3.value
+              value === fields.field1.value
+              || value === fields.field3.value
             ) {
               return 'Field 2 cannot be equal to field 1 or field 3'
             }
@@ -205,7 +202,7 @@ describe('validate field', () => {
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(
         simplifyFieldsState(formFields, ['value', 'errors', 'isValid']),
@@ -256,7 +253,7 @@ describe('validate field', () => {
     const field3 = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedCtx, handleChange } = useForm({
         initialConfig: {
           field1: { initialValue: '', required: true },
           field2: { initialValue: '', required: true },
@@ -265,8 +262,8 @@ describe('validate field', () => {
         fieldIsValid: {
           field2: ({ value, fields }) => {
             if (
-              value === fields.field1.value ||
-              value === fields.field3.value
+              value === fields.field1.value
+              || value === fields.field3.value
             ) {
               return 'Field 2 cannot be equal to field 1 or field 3'
             }
@@ -276,7 +273,7 @@ describe('validate field', () => {
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(
         simplifyFieldsState(formFields, ['value', 'errors', 'isValid']),
@@ -331,19 +328,17 @@ describe('validate field', () => {
     const setAge = emulateAction<number>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
-        initialConfig: {
-          age: { initialValue: 0, metadata: { minAge: 18 } },
-        },
+      const { formTypedCtx, handleChange } = useForm({
+        initialConfig: { age: { initialValue: 0, metadata: { minAge: 18 } } },
         fieldIsValid: {
           age: ({ value, fieldMetadata }) =>
-            value < fieldMetadata.minAge
-              ? 'You must be at least 18 years old'
-              : true,
+            value < fieldMetadata.minAge ?
+              'You must be at least 18 years old'
+            : true,
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(
         simplifyFieldsState(formFields, ['value', 'errors', 'isValid']),
@@ -379,17 +374,15 @@ describe('validate field', () => {
     const setField = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
-        initialConfig: {
-          field: { initialValue: '' },
-        },
+      const { formTypedCtx, handleChange } = useForm({
+        initialConfig: { field: { initialValue: '' } },
         fieldIsValid: {
           field: ({ value }) =>
             value === 'invalid' ? { silentInvalid: true } : true,
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(simplifyFieldsState(formFields))
 
@@ -417,22 +410,19 @@ describe('validate form', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
-        initialConfig: {
-          name: { initialValue: '' },
-          age: { initialValue: 0 },
-        },
+      const { formTypedCtx, handleChange } = useForm({
+        initialConfig: { name: { initialValue: '' }, age: { initialValue: 0 } },
         advancedFormValidation({ fieldsState, setFormError }) {
           if (
-            fieldsState.age.value < 18 &&
-            fieldsState.name.value === 'Adult'
+            fieldsState.age.value < 18
+            && fieldsState.name.value === 'Adult'
           ) {
             setFormError('You must be at least 18 years old')
           }
         },
       })
 
-      const { formFields, formError, formIsValid } = useFormState()
+      const { formFields, formError, formIsValid } = useFormState(formTypedCtx)
 
       renders.add({
         formIsValid,
@@ -485,13 +475,14 @@ test('force form validation', () => {
   const forceValidation = emulateAction()
 
   renderHook(() => {
-    const { useFormState, handleChange, forceFormValidation } = useForm({
+    const { formTypedCtx, handleChange, forceFormValidation } = useForm({
       initialConfig: {
         age: { initialValue: null as null | number, required: true },
       },
     })
 
-    const { formFields, formIsValid, validationWasForced } = useFormState()
+    const { formFields, formIsValid, validationWasForced } =
+      useFormState(formTypedCtx)
 
     renders.add({
       validationWasForced,
@@ -545,26 +536,22 @@ test('silentIfNotTouched error', () => {
   const setAge = emulateAction<number>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
-      initialConfig: {
-        age: { initialValue: 16 as number, required: true },
-      },
+    const { formTypedCtx, handleChange } = useForm({
+      initialConfig: { age: { initialValue: 16 as number, required: true } },
       fieldIsValid: {
         age: ({ value }) => {
           if (!value) return true
 
-          return value < 18
-            ? { silentIfNotTouched: 'You must be at least 18 years old' }
+          return value < 18 ?
+              { silentIfNotTouched: 'You must be at least 18 years old' }
             : true
         },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
-    renders.add({
-      age: simplifyFieldState(formFields.age),
-    })
+    renders.add({ age: simplifyFieldState(formFields.age) })
 
     setAge.useOnAction((age) => {
       handleChange('age', age)
@@ -589,14 +576,14 @@ test('add temp error', () => {
   const setName = emulateAction<string>()
 
   renderHook(() => {
-    const { useFormState, handleChange, setTemporaryError } = useForm({
+    const { formTypedCtx, handleChange, setTemporaryError } = useForm({
       initialConfig: {
         age: { initialValue: 16 as number, required: true },
         name: { initialValue: '' },
       },
     })
 
-    const { formFields, formIsValid } = useFormState()
+    const { formFields, formIsValid } = useFormState(formTypedCtx)
 
     renders.add({
       age: simplifyFieldState(formFields.age),
@@ -605,9 +592,7 @@ test('add temp error', () => {
     })
 
     addTempError.useOnAction((error) => {
-      setTemporaryError({
-        age: error,
-      })
+      setTemporaryError({ age: error })
     })
 
     setAge.useOnAction((age) => {
@@ -657,10 +642,8 @@ test('do not show validation errors if field is empty', () => {
   const setEmail = emulateAction<string>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
-      initialConfig: {
-        email: { initialValue: '' },
-      },
+    const { formTypedCtx, handleChange } = useForm({
+      initialConfig: { email: { initialValue: '' } },
       fieldIsValid: {
         email: ({ value }) => {
           return value.includes('@') ? true : 'Invalid email'
@@ -668,11 +651,9 @@ test('do not show validation errors if field is empty', () => {
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
-    renders.add({
-      email: simplifyFieldState(formFields.email),
-    })
+    renders.add({ email: simplifyFieldState(formFields.email) })
 
     setEmail.useOnAction((email) => {
       handleChange('email', email)
@@ -695,7 +676,7 @@ test('reproduce bug with formIsValid not updating', () => {
   const setShouldNotBeMoreThan5 = emulateAction<boolean>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedCtx, handleChange } = useForm({
       initialConfig: {
         items: { initialValue: 8 },
         shouldNotBeMoreThan5: { initialValue: false },
@@ -711,7 +692,7 @@ test('reproduce bug with formIsValid not updating', () => {
       },
     })
 
-    const { formFields, formIsValid } = useFormState()
+    const { formFields, formIsValid } = useFormState(formTypedCtx)
 
     renders.add({
       items: simplifyFieldState(formFields.items),
@@ -755,13 +736,11 @@ test('reproduce bug: forceFormValidation when called second time hides errors', 
   const forceValidation = emulateAction()
 
   renderHook(() => {
-    const { useFormState, forceFormValidation } = useForm({
-      initialConfig: {
-        name: { initialValue: '', required: true },
-      },
+    const { formTypedCtx, forceFormValidation } = useForm({
+      initialConfig: { name: { initialValue: '', required: true } },
     })
 
-    const { formFields, formIsValid } = useFormState()
+    const { formFields, formIsValid } = useFormState(formTypedCtx)
 
     renders.add({
       formIsValid,
@@ -810,14 +789,14 @@ test('error is hidden when other field is changed', () => {
   const forceValidation = emulateAction()
 
   renderHook(() => {
-    const { useFormState, handleChange, forceFormValidation } = useForm({
+    const { formTypedCtx, handleChange, forceFormValidation } = useForm({
       initialConfig: {
         name: { initialValue: '', required: true },
         age: { initialValue: 0 },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add({
       name: simplifyFieldState(formFields.name),
@@ -871,7 +850,7 @@ test('use isEmtpy from getFieldConfig', () => {
   const setName = emulateAction<string>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedCtx, handleChange } = useForm({
       initialConfig: {
         name: getFieldConfig<{ value: string } | null>({
           initialValue: null,
@@ -880,7 +859,7 @@ test('use isEmtpy from getFieldConfig', () => {
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields, ['value', 'isEmpty']))
 

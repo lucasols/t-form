@@ -1,6 +1,7 @@
 import { cleanup, renderHook } from '@testing-library/react'
 import { afterEach, expect, test } from 'vitest'
 import { useForm } from '../src/main'
+import { useFormState } from '../src/useFormState'
 import { emulateActions } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
 import { simplifyFieldsState } from './utils/simplifyFieldsState'
@@ -18,17 +19,15 @@ test('array fields methods', () => {
   }>()
 
   renderHook(() => {
-    const { useFormState, arrayFields } = useForm({
+    const { formTypedCtx, arrayFields } = useForm({
       initialConfig: {
         array: { initialValue: [] as string[] },
         nonArray: { initialValue: '' },
       },
-      arrayFieldsConfig: {
-        array: { getItemId: (index) => index },
-      },
+      arrayFieldsConfig: { array: { getItemId: (index) => index } },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields))
 

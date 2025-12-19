@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import { describe, expect, test } from 'vitest'
 import { getFieldConfig, useForm } from '../src/main'
+import { useFormState } from '../src/useFormState'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
 import { simplifyFieldsState } from './utils/simplifyFieldsState'
@@ -12,19 +13,19 @@ describe('with getFieldInitialConfig', () => {
     const setPassword = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedCtx, handleChange } = useForm({
         initialConfig: {
           password: getFieldConfig({
             initialValue: '',
             isValid: ({ value }) =>
-              value.length < 8
-                ? 'Password must have at least 8 characters'
-                : true,
+              value.length < 8 ?
+                'Password must have at least 8 characters'
+              : true,
           }),
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(
         simplifyFieldsState(formFields, ['value', 'errors', 'isValid']),
@@ -59,34 +60,32 @@ describe('update field initial config validation', () => {
   test('update a field config', () => {
     const renders = createRenderStore()
 
-    const updateConfigAction = emulateAction<
-      Parameters<
-        ReturnType<
-          typeof useForm<{
-            password: {
-              initialValue: string
-            }
-          }>
-        >['updateConfig']
-      >
-    >()
+    const updateConfigAction =
+      emulateAction<
+        Parameters<
+          ReturnType<
+            typeof useForm<{ password: { initialValue: string } }>
+          >['updateConfig']
+        >
+      >()
 
     const setPassword = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, updateConfig, handleChange } = useForm({
+      const { formTypedCtx, updateConfig, handleChange } = useForm({
         initialConfig: {
           password: getFieldConfig({
             initialValue: '1234567',
             isValid: ({ value }) =>
-              value.length < 8
-                ? 'Password must have at least 8 characters'
-                : true,
+              value.length < 8 ?
+                'Password must have at least 8 characters'
+              : true,
           }),
         },
       })
 
-      const { formFields, isDiffFromInitial, formIsValid } = useFormState()
+      const { formFields, isDiffFromInitial, formIsValid } =
+        useFormState(formTypedCtx)
 
       renders.add({
         isDiffFromInitial,
@@ -104,13 +103,7 @@ describe('update field initial config validation', () => {
     })
 
     updateConfigAction.call([
-      {
-        fields: {
-          password: {
-            simpleFieldIsValid: [],
-          },
-        },
-      },
+      { fields: { password: { simpleFieldIsValid: [] } } },
     ])
 
     expect(renders.snapshotFromLast).toMatchInlineSnapshot(`

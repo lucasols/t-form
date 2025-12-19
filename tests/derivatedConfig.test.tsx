@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react'
 import { expect, test } from 'vitest'
 import { useForm } from '../src/main'
+import { useFormState } from '../src/useFormState'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
 import { simplifyFieldsState } from './utils/simplifyFieldsState'
@@ -12,15 +13,13 @@ test('should not clean errors from derivated config', () => {
   const forceValidation = emulateAction()
 
   renderHook(() => {
-    const { useFormState, handleChange, forceFormValidation } = useForm({
+    const { formTypedCtx, handleChange, forceFormValidation } = useForm({
       initialConfig: {
         brCompanyType: {
           initialValue: null as 'pf' | 'pj' | null,
           required: true,
         },
-        brCnpj: {
-          initialValue: null,
-        },
+        brCnpj: { initialValue: null },
       },
       derivedConfig: {
         brCnpj: {
@@ -31,7 +30,7 @@ test('should not clean errors from derivated config', () => {
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields))
 
@@ -91,15 +90,13 @@ test('resetIfDerivedRequiredChangeToFalse', () => {
   const setCnpj = emulateAction<string>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedCtx, handleChange } = useForm({
       initialConfig: {
         brCompanyType: {
           initialValue: null as 'pf' | 'pj' | null,
           required: true,
         },
-        brCnpj: {
-          initialValue: null as string | null,
-        },
+        brCnpj: { initialValue: null as string | null },
       },
       derivedConfig: {
         brCnpj: {
@@ -116,7 +113,7 @@ test('resetIfDerivedRequiredChangeToFalse', () => {
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields))
 
@@ -169,12 +166,9 @@ test('derivated config based on field own value', () => {
   const setArrayOrNull = emulateAction<string[] | null>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedCtx, handleChange } = useForm({
       initialConfig: {
-        arrayOrNull: {
-          initialValue: null as string[] | null,
-          required: true,
-        },
+        arrayOrNull: { initialValue: null as string[] | null, required: true },
       },
       derivedConfig: {
         arrayOrNull: {
@@ -185,7 +179,7 @@ test('derivated config based on field own value', () => {
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields))
 

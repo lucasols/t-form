@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { describe, expect, test, vi } from 'vitest'
 import { useForm } from '../src/main'
+import { useFormState } from '../src/useFormState'
 import { asType } from '../src/utils/typing'
 import { emulateAction } from './utils/emulateAction'
 import { createRenderStore } from './utils/rendersStore'
@@ -11,13 +12,11 @@ test('set value', () => {
   const setName = emulateAction<string>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
-      initialConfig: {
-        name: { initialValue: 'John' },
-      },
+    const { formTypedCtx, handleChange } = useForm({
+      initialConfig: { name: { initialValue: 'John' } },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields))
 
@@ -42,13 +41,11 @@ test('handle change with callback', () => {
   const toggle = emulateAction()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
-      initialConfig: {
-        enabled: { initialValue: true },
-      },
+    const { formTypedCtx, handleChange } = useForm({
+      initialConfig: { enabled: { initialValue: true } },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields))
 
@@ -82,14 +79,14 @@ test('handle change multiple fields', () => {
   const setValues = emulateAction<[string, number]>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedCtx, handleChange } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
         age: { initialValue: 10 },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields))
 
@@ -123,14 +120,14 @@ test('handle change multiple fields should ignore undefined values', () => {
   }>()
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedCtx, handleChange } = useForm({
       initialConfig: {
         name: { initialValue: 'John' },
         age: { initialValue: 10 },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     renders.add(simplifyFieldsState(formFields, ['value']))
 
@@ -165,13 +162,11 @@ describe('handle change with skip touch', () => {
     const setName = emulateAction<string>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
-        initialConfig: {
-          name: { initialValue: 'John' },
-        },
+      const { formTypedCtx, handleChange } = useForm({
+        initialConfig: { name: { initialValue: 'John' } },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(simplifyFieldsState(formFields, ['value', 'isTouched']))
 
@@ -196,20 +191,17 @@ describe('handle change with skip touch', () => {
   test('set value and skip touch of one field only', () => {
     const renders = createRenderStore()
 
-    const setValues = emulateAction<{
-      name: string
-      age: number
-    }>()
+    const setValues = emulateAction<{ name: string; age: number }>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedCtx, handleChange } = useForm({
         initialConfig: {
           name: { initialValue: 'John' },
           age: { initialValue: 10 },
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(simplifyFieldsState(formFields, ['value', 'isTouched']))
 
@@ -231,20 +223,17 @@ describe('handle change with skip touch', () => {
   test('set value and touch only one field', () => {
     const renders = createRenderStore()
 
-    const setValues = emulateAction<{
-      name: string
-      age: number
-    }>()
+    const setValues = emulateAction<{ name: string; age: number }>()
 
     renderHook(() => {
-      const { useFormState, handleChange } = useForm({
+      const { formTypedCtx, handleChange } = useForm({
         initialConfig: {
           name: { initialValue: 'John' },
           age: { initialValue: 10 },
         },
       })
 
-      const { formFields } = useFormState()
+      const { formFields } = useFormState(formTypedCtx)
 
       renders.add(simplifyFieldsState(formFields, ['value', 'isTouched']))
 
@@ -270,13 +259,11 @@ test('handle field not found in handleChange', () => {
   const consoleError = vi.spyOn(console, 'error')
 
   renderHook(() => {
-    const { useFormState, handleChange } = useForm({
-      initialConfig: {
-        name: { initialValue: 'John' },
-      },
+    const { formTypedCtx, handleChange } = useForm({
+      initialConfig: { name: { initialValue: 'John' } },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
     setName.useOnAction((name) => {
       handleChange('notFound' as any, name)
@@ -294,18 +281,15 @@ test('handle field not found in handleChange', () => {
 
 test('use handleChange with undefined should not be ignored', () => {
   const { result } = renderHook(() => {
-    const { useFormState, handleChange } = useForm({
+    const { formTypedCtx, handleChange } = useForm({
       initialConfig: {
         name: { initialValue: asType<string | undefined>('John') },
       },
     })
 
-    const { formFields } = useFormState()
+    const { formFields } = useFormState(formTypedCtx)
 
-    return {
-      name: formFields.name,
-      handleChange,
-    }
+    return { name: formFields.name, handleChange }
   })
 
   expect(result.current.name.value).toMatchInlineSnapshot(`"John"`)
