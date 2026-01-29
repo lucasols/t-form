@@ -56,6 +56,132 @@ describe('with getFieldInitialConfig', () => {
   })
 })
 
+describe('populatedValue', () => {
+  test('populatedValue via getFieldConfig sets initial display value', () => {
+    const renders = createRenderStore()
+
+    renderHook(() => {
+      const { formTypedCtx } = useForm({
+        initialConfig: {
+          name: getFieldConfig({
+            initialValue: '',
+            populatedValue: 'John',
+          }),
+        },
+      })
+
+      const { formFields } = useFormState(formTypedCtx)
+
+      renders.add(simplifyFieldsState(formFields))
+    })
+
+    expect(renders.snapshot).toMatchInlineSnapshot(`
+      "
+      name: {val:John, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:Y, isL:N}
+      "
+    `)
+  })
+
+  test('isDiffFromInitial compares against initialValue, not populatedValue', () => {
+    const renders = createRenderStore()
+
+    const setName = emulateAction<string>()
+
+    renderHook(() => {
+      const { formTypedCtx, handleChange } = useForm({
+        initialConfig: {
+          name: getFieldConfig({
+            initialValue: '',
+            populatedValue: 'John',
+          }),
+        },
+      })
+
+      const { formFields } = useFormState(formTypedCtx)
+
+      renders.add(simplifyFieldsState(formFields, ['value', 'initialValue', 'isDiffFromInitial']))
+
+      setName.useOnAction((name) => {
+        handleChange('name', name)
+      })
+    })
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      name: {value:John, initialValue:, isDiffFromInitial:true}
+      "
+    `)
+
+    setName.call('')
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      ---
+      name: {value:, initialValue:, isDiffFromInitial:false}
+      "
+    `)
+
+    setName.call('Jack')
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      ---
+      name: {value:Jack, initialValue:, isDiffFromInitial:true}
+      "
+    `)
+  })
+
+  test('backwards compatibility: advancedCustomValue still works', () => {
+    const renders = createRenderStore()
+
+    renderHook(() => {
+      const { formTypedCtx } = useForm({
+        initialConfig: {
+          name: {
+            initialValue: '',
+            advancedCustomValue: 'John',
+          },
+        },
+      })
+
+      const { formFields } = useFormState(formTypedCtx)
+
+      renders.add(simplifyFieldsState(formFields))
+    })
+
+    expect(renders.snapshot).toMatchInlineSnapshot(`
+      "
+      name: {val:John, initV:, req:N, errors:null, isValid:Y, isEmpty:N, isTouched:N, isDiff:Y, isL:N}
+      "
+    `)
+  })
+
+  test('populatedValue takes precedence over advancedCustomValue', () => {
+    const renders = createRenderStore()
+
+    renderHook(() => {
+      const { formTypedCtx } = useForm({
+        initialConfig: {
+          name: getFieldConfig({
+            initialValue: '',
+            populatedValue: 'FromPopulated',
+          }),
+        },
+      })
+
+      const { formFields } = useFormState(formTypedCtx)
+
+      renders.add(simplifyFieldsState(formFields, ['value', 'initialValue']))
+    })
+
+    expect(renders.snapshot).toMatchInlineSnapshot(`
+      "
+      name: {value:FromPopulated, initialValue:}
+      "
+    `)
+  })
+})
+
 describe('update field initial config validation', () => {
   test('update a field config', () => {
     const renders = createRenderStore()

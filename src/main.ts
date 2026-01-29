@@ -48,7 +48,10 @@ export type FieldInitialConfig<T = unknown, M = unknown> = {
   required?: boolean
   requiredErrorMsg?: string | false
   untouchable?: boolean
+  /** @deprecated use `getFieldConfig with populatedValue` instead */
   advancedCustomValue?: T
+  /** @internal */
+  _populatedValue?: T
   /** @internal */
   _validation?: FieldSimplifiedValidation<any, any>
   /** @internal */
@@ -329,7 +332,7 @@ export function useForm<T extends AnyInitialConfig, M = undefined>({
         id as string,
         null,
         config,
-        config.initialValue,
+        formStoreState.fields[id].value,
         formStoreState.fields[id],
         true,
       )
@@ -950,7 +953,7 @@ function getInitialStateFromConfig<T extends FieldsInitialConfig>(
   [K in keyof T]: FieldState<T[K]['initialValue'], T[K]['metadata']>
 }[keyof T] {
   return {
-    value: config.advancedCustomValue ?? config.initialValue,
+    value: config._populatedValue ?? config.advancedCustomValue ?? config.initialValue,
     initialValue: config.initialValue,
     required: config.required ?? false,
     errors: null,
@@ -1310,6 +1313,8 @@ export function useDynamicForm<V, M = undefined, FM = undefined>({
 
 export type GetFieldInitialConfig<V, M> = {
   initialValue: V
+  /** Sets the initial display value, while `initialValue` remains the baseline for dirty checking */
+  populatedValue?: V
   required?: boolean
   requiredErrorMsg?: string | false
   metadata?: M
@@ -1321,6 +1326,7 @@ export type GetFieldInitialConfig<V, M> = {
 
 export function getFieldConfig<V, M = undefined>({
   initialValue,
+  populatedValue,
   required,
   requiredErrorMsg,
   metadata,
@@ -1331,6 +1337,7 @@ export function getFieldConfig<V, M = undefined>({
 }: GetFieldInitialConfig<V, M>): FieldInitialConfig<V, M> {
   return {
     initialValue,
+    _populatedValue: populatedValue,
     required,
     requiredErrorMsg,
     metadata,
