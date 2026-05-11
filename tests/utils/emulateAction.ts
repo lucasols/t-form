@@ -2,10 +2,9 @@ import { act } from '@testing-library/react'
 import { evtmitter } from 'evtmitter'
 import { useOnEvtmitterEvent } from 'evtmitter/react'
 
+/** @deprecated just return the function in renderHook and use it directly */
 export function emulateAction<T = undefined>() {
-  const emitter = evtmitter<{
-    action: T
-  }>()
+  const emitter = evtmitter<{ action: T }>()
 
   return {
     call(...args: T extends undefined ? [] : [T]) {
@@ -34,16 +33,11 @@ export function emulateActions<T extends Record<string, any>>() {
     })
   }
 
-  function useOnActions(callbacks: {
-    [K in keyof T]: (value: T[K]) => void
-  }) {
+  function useOnActions(callbacks: { [K in keyof T]: (value: T[K]) => void }) {
     useOnEvtmitterEvent(emitters, '*', (value, key) => {
       callbacks[key as keyof T](value as T[keyof T])
     })
   }
 
-  return {
-    call,
-    useOnActions,
-  }
+  return { call, useOnActions }
 }
