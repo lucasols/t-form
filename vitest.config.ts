@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config'
 const isProd = process.env.NODE_ENV === 'production'
 
 export default defineConfig({
+  oxc: { jsx: { runtime: 'automatic' } },
   test: {
     include: ['tests/*.test.{ts,tsx}'],
     testTimeout: 2_000,
