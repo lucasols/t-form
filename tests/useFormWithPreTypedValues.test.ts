@@ -198,6 +198,54 @@ describe('basic method works', () => {
   })
 })
 
+test('derived required with custom errorMsg works with useFormWithPreTypedValues', () => {
+  const { result } = renderHook(() => {
+    type FormValues = {
+      age: number | null
+      birthDate: Date | null
+    }
+
+    const { formTypedCtx, handleChange, touchField } =
+      useFormWithPreTypedValues<FormValues>({
+        initialConfig: {
+          age: { initialValue: null },
+          birthDate: {
+            initialValue: null,
+            required: ({ fields }) => ({
+              required: !fields.age.isEmpty,
+              errorMsg: `Birth date required for age ${fields.age.value}`,
+            }),
+          },
+        },
+      })
+
+    const { formFields } = useFormState(formTypedCtx)
+
+    return { formFields, handleChange, touchField }
+  })
+
+  act(() => {
+    result.current.touchField('birthDate')
+    result.current.handleChange('age', 25)
+  })
+
+  expect(
+    pick(result.current.formFields.birthDate, [
+      'required',
+      'errors',
+      'isValid',
+    ]),
+  ).toMatchInlineSnapshot(`
+    {
+      "errors": [
+        "Birth date required for age 25",
+      ],
+      "isValid": false,
+      "required": true,
+    }
+  `)
+})
+
 test('resetFieldsOnChange works with useFormWithPreTypedValues', () => {
   const { result } = renderHook(() => {
     type FormValues = {

@@ -1,3 +1,4 @@
+import { createLoggerStore } from '@ls-stack/utils/testUtils'
 import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { useForm, useFormState } from '../src/main'
@@ -251,6 +252,193 @@ describe('required fields', () => {
       ┌─
       ⎢ age: {value:null, required:false, errors:null, isValid:true}
       ⎢ birthDate: {value:null, required:false, errors:null, isValid:true}
+      └─
+      "
+    `)
+  })
+
+  test('derived required can set a custom error message', () => {
+    const renders = createLoggerStore()
+
+    const { result } = renderHook(() => {
+      const {
+        formTypedCtx: formTypedProps,
+        handleChange,
+        touchField,
+      } = useForm({
+        initialConfig: {
+          age: { initialValue: null as null | number },
+          birthDate: { initialValue: null as null | Date },
+        },
+        derivedConfig: {
+          birthDate: {
+            required: ({ fields: { age } }) => ({
+              required: !age.isEmpty,
+              errorMsg: `Birth date is required when age is ${age.value}`,
+            }),
+          },
+        },
+      })
+
+      const { formFields } = useFormState(formTypedProps)
+
+      renders.add(
+        simplifyFieldsState(formFields, [
+          'required',
+          'value',
+          'errors',
+          'isValid',
+        ]),
+      )
+
+      return { handleChange, touchField }
+    })
+
+    act(() => {
+      renders.addMark('Touch birthDate')
+      result.current.touchField('birthDate')
+    })
+
+    act(() => {
+      renders.addMark('Set age to 20')
+      result.current.handleChange('age', 20)
+    })
+
+    act(() => {
+      renders.addMark('Set age to 30')
+      result.current.handleChange('age', 30)
+    })
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      ┌─
+      ⋅ age: {required:❌, value:null, errors:null, isValid:✅}
+      ⋅ birthDate: {required:❌, value:null, errors:null, isValid:✅}
+      └─
+
+      >>> Touch birthDate
+
+      ┌─
+      ⋅ age: {required:❌, value:null, errors:null, isValid:✅}
+      ⋅ birthDate: {required:❌, value:null, errors:null, isValid:✅}
+      └─
+
+      >>> Set age to 20
+
+      ┌─
+      ⋅ age: {required:❌, value:20, errors:null, isValid:✅}
+      ⋅ birthDate: {required:✅, value:null, errors:[Birth date is required when age is 20], isValid:❌}
+      └─
+
+      >>> Set age to 30
+
+      ┌─
+      ⋅ age: {required:❌, value:30, errors:null, isValid:✅}
+      ⋅ birthDate: {required:✅, value:null, errors:[Birth date is required when age is 30], isValid:❌}
+      └─
+      "
+    `)
+  })
+
+  test('derived required errorMsg overrides static requiredErrorMsg', () => {
+    const renders = createLoggerStore()
+
+    const { result } = renderHook(() => {
+      const { formTypedCtx: formTypedProps, touchField } = useForm({
+        initialConfig: {
+          birthDate: {
+            initialValue: null as null | Date,
+            requiredErrorMsg: 'Static message',
+          },
+        },
+        derivedConfig: {
+          birthDate: {
+            required: () => ({ required: true, errorMsg: 'Derived message' }),
+          },
+        },
+      })
+
+      const { formFields } = useFormState(formTypedProps)
+
+      renders.add(
+        simplifyFieldsState(formFields, ['required', 'errors', 'isValid']),
+      )
+
+      return { touchField }
+    })
+
+    act(() => {
+      renders.addMark('Touch birthDate')
+      result.current.touchField('birthDate')
+    })
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      -> birthDate: {required:✅, errors:null, isValid:❌}
+
+      >>> Touch birthDate
+
+      -> birthDate: {required:✅, errors:[Derived message], isValid:❌}
+      "
+    `)
+  })
+
+  test('derived required still accepts plain boolean return', () => {
+    const renders = createLoggerStore()
+
+    const { result } = renderHook(() => {
+      const {
+        formTypedCtx: formTypedProps,
+        handleChange,
+        touchField,
+      } = useForm({
+        initialConfig: {
+          age: { initialValue: null as null | number },
+          birthDate: { initialValue: null as null | Date },
+        },
+        derivedConfig: {
+          birthDate: { required: ({ fields: { age } }) => !age.isEmpty },
+        },
+      })
+
+      const { formFields } = useFormState(formTypedProps)
+
+      renders.add(
+        simplifyFieldsState(formFields, ['required', 'errors', 'isValid']),
+      )
+
+      return { handleChange, touchField }
+    })
+
+    act(() => {
+      renders.addMark('Touch birthDate')
+      result.current.touchField('birthDate')
+    })
+
+    act(() => {
+      renders.addMark('Set age to 20')
+      result.current.handleChange('age', 20)
+    })
+
+    expect(renders.snapshotFromLast).toMatchInlineSnapshot(`
+      "
+      ┌─
+      ⋅ age: {required:❌, errors:null, isValid:✅}
+      ⋅ birthDate: {required:❌, errors:null, isValid:✅}
+      └─
+
+      >>> Touch birthDate
+
+      ┌─
+      ⋅ age: {required:❌, errors:null, isValid:✅}
+      ⋅ birthDate: {required:❌, errors:null, isValid:✅}
+      └─
+
+      >>> Set age to 20
+
+      ┌─
+      ⋅ age: {required:❌, errors:null, isValid:✅}
+      ⋅ birthDate: {required:✅, errors:[This field is required], isValid:❌}
       └─
       "
     `)

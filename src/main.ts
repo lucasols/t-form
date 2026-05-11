@@ -60,9 +60,16 @@ export type FieldInitialConfig<T = unknown, M = unknown> = {
   _isLoading?: (value: any) => boolean
 } & (M extends undefined ? { metadata?: M } : { metadata: M })
 
+export type DerivedRequiredResult =
+  | boolean
+  | { required: boolean; errorMsg?: string }
+
 type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
   checkIfIsEmpty?: (value: T) => boolean
-  required?: (context: { fields: F; formMetadata: FM | undefined }) => boolean
+  required?: (context: {
+    fields: F
+    formMetadata: FM | undefined
+  }) => DerivedRequiredResult
   resetIfDerivedRequiredChangeToFalse?: { value: T }
   isLoading?: (value: T) => boolean
   resetFieldsOnChange?: { [K in keyof F]?: F[K]['initialValue'] }
@@ -180,7 +187,7 @@ export type UpdateFieldConfig<
   derivedRequired?: (context: {
     fields: FieldsState<T>
     formMetadata: FM | undefined
-  }) => boolean
+  }) => DerivedRequiredResult
   resetFieldsOnChange?: { [P in keyof T]?: T[P]['initialValue'] }
   resetItselfOnChange?: {
     value: T[K]['initialValue']
@@ -1049,9 +1056,21 @@ function updateFieldStateFromValue(
   draftField.valueIsLoading = false
 }
 
+function normalizeDerivedRequired(result: DerivedRequiredResult): {
+  required: boolean
+  errorMsg: string | undefined
+} {
+  if (typeof result === 'boolean') {
+    return { required: result, errorMsg: undefined }
+  }
+
+  return { required: result.required, errorMsg: result.errorMsg }
+}
+
 function basicFieldValidation(
   fieldConfig: FieldConfig,
   value: unknown,
+  derivedErrorMsg?: string,
 ): { errors: string[] | null; isValid: boolean; isEmpty: boolean } {
   const errors: string[] = []
   let isValid = true
@@ -1061,9 +1080,14 @@ function basicFieldValidation(
   if (fieldConfig.required && isEmpty) {
     isValid = false
 
-    if (fieldConfig.requiredErrorMsg !== false) {
+    const resolvedMsg =
+      derivedErrorMsg !== undefined ?
+        derivedErrorMsg
+      : fieldConfig.requiredErrorMsg
+
+    if (resolvedMsg !== false) {
       errors.push(
-        fieldConfig.requiredErrorMsg
+        resolvedMsg
           || (typeof globalConfig.defaultRequiredMsg === 'string' ?
             globalConfig.defaultRequiredMsg
           : globalConfig.defaultRequiredMsg()),
@@ -1090,10 +1114,13 @@ function updateDerivedConfig(
         return
       }
 
-      const newRequired = fieldConfig.derived.required({
-        fields: formState.fields,
-        formMetadata: formState.formMetadata,
-      })
+      const { required: newRequired, errorMsg: derivedErrorMsg } =
+        normalizeDerivedRequired(
+          fieldConfig.derived.required({
+            fields: formState.fields,
+            formMetadata: formState.formMetadata,
+          }),
+        )
 
       if (fieldConfig.derived.resetIfDerivedRequiredChangeToFalse) {
         if (newRequired !== fieldState.required && !newRequired) {
@@ -1107,6 +1134,7 @@ function updateDerivedConfig(
       const validationResults = basicFieldValidation(
         { ...fieldConfig, required: newRequired },
         fieldState.value,
+        derivedErrorMsg,
       )
 
       if (
