@@ -60,9 +60,7 @@ export type FieldInitialConfig<T = unknown, M = unknown> = {
   _isLoading?: (value: any) => boolean
 } & (M extends undefined ? { metadata?: M } : { metadata: M })
 
-export type DerivedRequiredResult =
-  | boolean
-  | { required: boolean; errorMsg?: string }
+export type DerivedRequiredResult = boolean | { requiredWithMsg: string }
 
 type FieldDerivedConfig<T, F extends FieldsState<any>, FM> = {
   checkIfIsEmpty?: (value: T) => boolean
@@ -1064,7 +1062,7 @@ function normalizeDerivedRequired(result: DerivedRequiredResult): {
     return { required: result, errorMsg: undefined }
   }
 
-  return { required: result.required, errorMsg: result.errorMsg }
+  return { required: true, errorMsg: result.requiredWithMsg }
 }
 
 function basicFieldValidation(

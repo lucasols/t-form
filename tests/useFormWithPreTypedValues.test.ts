@@ -211,10 +211,12 @@ test('derived required with custom errorMsg works with useFormWithPreTypedValues
           age: { initialValue: null },
           birthDate: {
             initialValue: null,
-            required: ({ fields }) => ({
-              required: !fields.age.isEmpty,
-              errorMsg: `Birth date required for age ${fields.age.value}`,
-            }),
+            required: ({ fields }) =>
+              fields.age.isEmpty ?
+                false
+              : {
+                  requiredWithMsg: `Birth date required for age ${fields.age.value}`,
+                },
           },
         },
       })

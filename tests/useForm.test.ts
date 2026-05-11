@@ -272,10 +272,12 @@ describe('required fields', () => {
         },
         derivedConfig: {
           birthDate: {
-            required: ({ fields: { age } }) => ({
-              required: !age.isEmpty,
-              errorMsg: `Birth date is required when age is ${age.value}`,
-            }),
+            required: ({ fields: { age } }) =>
+              age.isEmpty ?
+                false
+              : {
+                  requiredWithMsg: `Birth date is required when age is ${age.value}`,
+                },
           },
         },
       })
@@ -353,7 +355,7 @@ describe('required fields', () => {
         },
         derivedConfig: {
           birthDate: {
-            required: () => ({ required: true, errorMsg: 'Derived message' }),
+            required: () => ({ requiredWithMsg: 'Derived message' }),
           },
         },
       })
