@@ -126,3 +126,31 @@ test('useFormState', () => {
     `"<div><div>A Field onChange</div><div>B Field onChange</div></div>"`,
   )
 })
+
+test('useFormState keeps the selected state stable across rerenders without form changes', () => {
+  const renderedFieldEntries: unknown[] = []
+
+  const Component = () => {
+    const { formTypedCtx } = useForm({
+      initialConfig: {
+        name: { initialValue: 'John' },
+        email: { initialValue: 'john@example.com' },
+      },
+    })
+
+    const { fieldEntries } = useFormState(formTypedCtx)
+
+    renderedFieldEntries.push(fieldEntries)
+
+    return null
+  }
+
+  const { rerender } = render(<Component />)
+
+  rerender(<Component />)
+  rerender(<Component />)
+
+  expect(renderedFieldEntries).toHaveLength(3)
+  expect(renderedFieldEntries[1]).toBe(renderedFieldEntries[0])
+  expect(renderedFieldEntries[2]).toBe(renderedFieldEntries[0])
+})

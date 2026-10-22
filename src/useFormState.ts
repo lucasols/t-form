@@ -59,22 +59,27 @@ export function useFormState<T extends AnyInitialConfig, M>(
     }
   }
 
-  const state = formStore.useSelector((state) => {
-    const fieldEntries = objectTypedEntries(state.fields)
+  const state = formStore.useSelector(
+    useCallback(
+      (state: FormStore<T, M>['state']) => {
+        const fieldEntries = objectTypedEntries(state.fields)
 
-    const { someFieldIsLoading, formIsValid, isDiffFromInitial } =
-      getGenericFormState<T>(state, fieldEntries, mustBeDiffFromInitial)
+        const { someFieldIsLoading, formIsValid, isDiffFromInitial } =
+          getGenericFormState<T>(state, fieldEntries, mustBeDiffFromInitial)
 
-    return {
-      formFields: state.fields,
-      fieldEntries,
-      formError: state.formError,
-      validationWasForced: state.validationWasForced,
-      someFieldIsLoading,
-      formIsValid,
-      isDiffFromInitial,
-    }
-  })
+        return {
+          formFields: state.fields,
+          fieldEntries,
+          formError: state.formError,
+          validationWasForced: state.validationWasForced,
+          someFieldIsLoading,
+          formIsValid,
+          isDiffFromInitial,
+        }
+      },
+      [mustBeDiffFromInitial],
+    ),
+  )
 
   const getFieldProps: UseFormState['getFieldProps'] = useCallback(
     (id) => {
